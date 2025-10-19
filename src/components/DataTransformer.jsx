@@ -54,22 +54,22 @@ const DataTransformer = () => {
     { id: 'go', label: 'Go' }
   ];
 
-  const convert = () => {
+  const convert = async () => {
     try {
-      let data = input;
+      let data;
 
-      // Parse input
+      // Parse input based on format
       if (inputFormat === 'json') {
         data = JSON.parse(input);
       } else if (inputFormat === 'xml') {
-        data = DataUtils.xmlToJson(input);
+        data = await DataUtils.xmlToJson(input);
       } else if (inputFormat === 'yaml') {
         data = DataUtils.yamlToJson(input);
       } else if (inputFormat === 'csv') {
         data = DataUtils.csvToJson(input);
       }
 
-      // Convert to output
+      // Convert to output format
       let result = '';
       if (outputFormat === 'json') {
         result = JSON.stringify(data, null, 2);
@@ -108,8 +108,10 @@ const DataTransformer = () => {
       const data = JSON.parse(input);
       const result = DataUtils.queryJsonPath(data, query);
       setQueryResult(JSON.stringify(result, null, 2));
+      setValidation({ valid: true, message: 'Query executed successfully!' });
     } catch (e) {
-      setQueryResult(`Error: ${e.message}`);
+      setQueryResult('');
+      setValidation({ valid: false, message: `Query Error: ${e.message}` });
     }
   };
 
@@ -119,49 +121,23 @@ const DataTransformer = () => {
       const data2 = JSON.parse(compareInput);
       const diffs = DataUtils.diffObjects(data1, data2);
       setDiffResult(diffs);
+      setValidation({ valid: true, message: `Found ${diffs.length} difference(s)` });
     } catch (e) {
-      setDiffResult([{ type: 'error', message: e.message }]);
+      setDiffResult([]);
+      setValidation({ valid: false, message: `Compare Error: ${e.message}` });
     }
   };
 
   const generateMock = () => {
     try {
       const schemaObj = JSON.parse(schema);
-      const mock = this.generateMockData(schemaObj);
+      const mock = DataUtils.generateMockData(schemaObj);
       setOutput(JSON.stringify(mock, null, 2));
-      setValidation({ valid: true, message: 'Mock data generated!' });
+      setValidation({ valid: true, message: 'Mock data generated successfully!' });
     } catch (e) {
-      setValidation({ valid: false, message: e.message });
+      setOutput('');
+      setValidation({ valid: false, message: `Mock Generation Error: ${e.message}` });
     }
-  };
-
-  const generateMockData = (schema) => {
-    const generate = (s) => {
-      if (!s) return null;
-
-      if (s.type === 'object') {
-        const obj = {};
-        if (s.properties) {
-          Object.entries(s.properties).forEach(([key, prop]) => {
-            obj[key] = generate(prop);
-          });
-        }
-        return obj;
-      }
-
-      if (s.type === 'array') {
-        const items = s.items || { type: 'string' };
-        return Array(3).fill(null).map(() => generate(items));
-      }
-
-      if (s.type === 'string') return s.example || 'sample text';
-      if (s.type === 'number') return s.example || 42;
-      if (s.type === 'integer') return s.example || 10;
-      if (s.type === 'boolean') return true;
-
-      return null;
-    };
-    return generate(schema);
   };
 
   const generateInterface = () => {
@@ -180,9 +156,10 @@ const DataTransformer = () => {
       }
 
       setOutput(code);
-      setValidation({ valid: true, message: `${codeLanguage} interface generated!` });
+      setValidation({ valid: true, message: `${codeLanguage} code generated!` });
     } catch (e) {
-      setValidation({ valid: false, message: e.message });
+      setOutput('');
+      setValidation({ valid: false, message: `Code Generation Error: ${e.message}` });
     }
   };
 
@@ -201,7 +178,7 @@ const DataTransformer = () => {
   };
 
   useEffect(() => {
-    if (activeTab === 'convert') convert();
+    convert();
   }, [inputFormat, outputFormat]);
 
   return (
@@ -365,7 +342,7 @@ const DataTransformer = () => {
             <h2 className="text-xl font-bold text-gray-800 mb-4">JSONPath Query Tester</h2>
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">JSONPath Expression</label>
-              <p className="text-xs text-gray-500 mb-3">Examples: $.name, $.skills[0], $.address.city</p>
+              <p className="text-xs text-gray-500 mb-3">Examples: $.name, $.skills[0], $.address.city, $.users[*].id</p>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -429,19 +406,21 @@ const DataTransformer = () => {
         {activeTab === 'diff' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Data 1</h2>
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Data 1 (Original)</h2>
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 className="w-full h-64 p-4 border-2 border-gray-200 rounded-lg font-mono text-sm focus:outline-none focus:border-blue-400 resize-none"
+                placeholder="Enter first JSON object..."
               />
             </div>
             <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Data 2</h2>
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Data 2 (Updated)</h2>
               <textarea
                 value={compareInput}
                 onChange={(e) => setCompareInput(e.target.value)}
                 className="w-full h-64 p-4 border-2 border-gray-200 rounded-lg font-mono text-sm focus:outline-none focus:border-blue-400 resize-none"
+                placeholder="Enter second JSON object..."
               />
             </div>
             <div className="lg:col-span-2 bg-white rounded-xl shadow-lg p-6">
@@ -463,15 +442,15 @@ const DataTransformer = () => {
                       key={i}
                       className={`p-3 rounded-lg border-l-4 font-mono text-sm ${
                         diff.type === 'added'
-                          ? 'bg-green-50 border-green-500'
+                          ? 'bg-green-50 border-green-500 text-green-800'
                           : diff.type === 'removed'
-                          ? 'bg-red-50 border-red-500'
+                          ? 'bg-red-50 border-red-500 text-red-800'
                           : diff.type === 'changed'
-                          ? 'bg-yellow-50 border-yellow-500'
-                          : 'bg-gray-50 border-gray-500'
+                          ? 'bg-yellow-50 border-yellow-500 text-yellow-800'
+                          : 'bg-gray-50 border-gray-500 text-gray-800'
                       }`}
                     >
-                      <div className="font-bold text-gray-800">{diff.path || 'Error'}</div>
+                      <div className="font-bold">{diff.path || 'Error'}</div>
                       {diff.type === 'changed' && (
                         <>
                           <div className="text-red-600 mt-1">- {JSON.stringify(diff.old)}</div>
@@ -498,6 +477,7 @@ const DataTransformer = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h2 className="text-xl font-bold text-gray-800 mb-4">JSON Schema</h2>
+              <p className="text-xs text-gray-500 mb-3">Define your schema with type, properties, and format</p>
               <textarea
                 value={schema}
                 onChange={(e) => setSchema(e.target.value)}
@@ -548,7 +528,7 @@ const DataTransformer = () => {
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                className="w-full h-96 p-4 border-2 border-gray-200 rounded-lg font-mono text-sm focus:outline-none focus:border-blue-400 resize-none"
+                className="w-full h-80 p-4 border-2 border-gray-200 rounded-lg font-mono text-sm focus:outline-none focus:border-blue-400 resize-none"
                 placeholder="Enter JSON to generate interfaces..."
               />
               <div className="mt-4">
@@ -578,11 +558,11 @@ const DataTransformer = () => {
               </button>
             </div>
             <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Generated Code</h2>
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Generated Code ({codeLanguage})</h2>
               <textarea
                 value={output}
                 readOnly
-                className="w-full h-96 p-4 border-2 border-gray-200 rounded-lg font-mono text-sm bg-gray-50 resize-none"
+                className="w-full h-80 p-4 border-2 border-gray-200 rounded-lg font-mono text-sm bg-gray-50 resize-none"
                 placeholder="Code will appear here..."
               />
               <div className="flex gap-2 mt-4 flex-wrap">
@@ -605,7 +585,7 @@ const DataTransformer = () => {
           </div>
         )}
 
-        {/* Validation Status */}
+        {/* Validation Status Bar */}
         {validation && activeTab !== 'validate' && (
           <div className="mt-6 bg-white rounded-xl shadow-lg p-4">
             <div className="flex items-center gap-3">

@@ -1,14 +1,12 @@
 export const CodeGenerators = {
   generateTypeScript(obj, name = 'Root', visited = new Set()) {
     if (!obj) return 'any';
-    if (visited.has(obj)) return 'any';
     
     const getType = (value) => {
-      if (value === null || value === undefined) return 'null';
+      if (value === null || value === undefined) return 'any';
       if (Array.isArray(value)) {
         if (value.length === 0) return 'any[]';
-        const itemType = this.getTypeFromValue(value[0]);
-        return `${itemType}[]`;
+        return `${this.getTypeFromValue(value[0])}[]`;
       }
       if (typeof value === 'object') {
         return 'object';
@@ -22,19 +20,28 @@ export const CodeGenerators = {
     }
     
     if (typeof obj === 'object' && obj !== null) {
-      visited.add(obj);
+      // Check if already visited to avoid infinite loops
+      const objKey = JSON.stringify(obj);
+      if (visited.has(objKey)) return name;
+      visited.add(objKey);
       
+      // Build interface for this object
       const props = Object.entries(obj)
         .map(([key, value]) => {
           let type;
-          if (Array.isArray(value)) {
-            if (value.length > 0 && typeof value[0] === 'object') {
-              const nestedName = key.charAt(0).toUpperCase() + key.slice(1);
-              type = `${nestedName}[]`;
+          
+          if (value === null) {
+            type = 'any';
+          } else if (Array.isArray(value)) {
+            if (value.length > 0 && typeof value[0] === 'object' && value[0] !== null) {
+              // Array of objects - create interface for items
+              const itemType = this.getTypeFromValue(value[0]);
+              type = `${itemType}[]`;
             } else {
-              type = this.getTypeFromValue(value[0] || null) + '[]';
+              type = this.getTypeFromValue(value.length > 0 ? value[0] : null) + '[]';
             }
-          } else if (typeof value === 'object' && value !== null) {
+          } else if (typeof value === 'object') {
+            // Nested object - use generated interface name
             const nestedName = key.charAt(0).toUpperCase() + key.slice(1);
             type = nestedName;
           } else {
@@ -44,7 +51,19 @@ export const CodeGenerators = {
         })
         .join('\n');
       
-      return `interface ${name} {\n${props}\n}`;
+      // Generate nested interfaces
+      let nestedInterfaces = '';
+      Object.entries(obj).forEach(([key, value]) => {
+        if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+          const nestedName = key.charAt(0).toUpperCase() + key.slice(1);
+          const nestedCode = this.generateTypeScript(value, nestedName, visited);
+          if (nestedCode && nestedCode.startsWith('interface')) {
+            nestedInterfaces += nestedCode + '\n\n';
+          }
+        }
+      });
+      
+      return nestedInterfaces + `interface ${name} {\n${props}\n}`;
     }
     
     return 'any';
@@ -58,7 +77,11 @@ export const CodeGenerators = {
         return Number.isInteger(value) ? 'int' : 'float';
       }
       if (typeof value === 'string') return 'str';
-      if (Array.isArray(value)) return 'list';
+      if (Array.isArray(value)) {
+        if (value.length === 0) return 'list';
+        const itemType = getType(value[0]);
+        return `list[${itemType}]`;
+      }
       if (typeof value === 'object') return 'dict';
       return 'Any';
     };
@@ -85,7 +108,11 @@ export const CodeGenerators = {
         return Number.isInteger(value) ? 'int' : 'double';
       }
       if (typeof value === 'boolean') return 'boolean';
-      if (Array.isArray(value)) return 'List';
+      if (Array.isArray(value)) {
+        if (value.length === 0) return 'List';
+        const itemType = this.getJavaType(value[0]);
+        return `List<${itemType}>`;
+      }
       if (typeof value === 'object') return 'Map';
       return 'Object';
     };
@@ -106,7 +133,15 @@ export const CodeGenerators = {
         })
         .join('\n');
       
-      return `public class ${name} {\n${fields}\n\n${getters}\n}`;
+      const setters = Object.entries(obj)
+        .map(([key, value]) => {
+          const type = getType(value);
+          const capitalKey = key.charAt(0).toUpperCase() + key.slice(1);
+          return `  public void set${capitalKey}(${type} ${key}) { this.${key} = ${key}; }`;
+        })
+        .join('\n');
+      
+      return `public class ${name} {\n${fields}\n\n${getters}\n\n${setters}\n}`;
     }
     
     return '';
@@ -120,7 +155,11 @@ export const CodeGenerators = {
         return Number.isInteger(value) ? 'int' : 'float64';
       }
       if (typeof value === 'boolean') return 'bool';
-      if (Array.isArray(value)) return '[]interface{}';
+      if (Array.isArray(value)) {
+        if (value.length === 0) return '[]interface{}';
+        const itemType = this.getGoType(value[0]);
+        return `[]${itemType}`;
+      }
       if (typeof value === 'object') return 'map[string]interface{}';
       return 'interface{}';
     };
@@ -150,6 +189,26 @@ export const CodeGenerators = {
     }
     if (typeof value === 'object') return 'object';
     return 'any';
+  },
+
+  getJavaType(value) {
+    if (value === null) return 'Object';
+    if (typeof value === 'string') return 'String';
+    if (typeof value === 'number') return Number.isInteger(value) ? 'int' : 'double';
+    if (typeof value === 'boolean') return 'boolean';
+    if (Array.isArray(value)) return 'List';
+    if (typeof value === 'object') return 'Map';
+    return 'Object';
+  },
+
+  getGoType(value) {
+    if (value === null) return 'interface{}';
+    if (typeof value === 'string') return 'string';
+    if (typeof value === 'number') return Number.isInteger(value) ? 'int' : 'float64';
+    if (typeof value === 'boolean') return 'bool';
+    if (Array.isArray(value)) return '[]interface{}';
+    if (typeof value === 'object') return 'map[string]interface{}';
+    return 'interface{}';
   }
 };
 

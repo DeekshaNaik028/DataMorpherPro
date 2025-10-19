@@ -1,71 +1,100 @@
+import * as YAML from 'js-yaml';
+
 export const DataUtils = {
-  // ========== JSON TO OTHER FORMATS ==========
+  // ========== JSON TO XML ==========
   
   jsonToXml(obj, rootName = 'root') {
+    const escapeXml = (str) => {
+      if (typeof str !== 'string') str = String(str);
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+    };
+
     const convert = (o, name) => {
       if (Array.isArray(o)) {
-        return o.map((item, i) => convert(item, name.replace(/s$/, ''))).join('');
+        return o.map((item) => convert(item, name.replace(/s$/, ''))).join('');
       }
       if (typeof o === 'object' && o !== null) {
         const entries = Object.entries(o);
         return `<${name}>${entries.map(([k, v]) => convert(v, k)).join('')}</${name}>`;
       }
-      return `<${name}>${String(o).replace(/[<>&]/g, c => ({
-        '<': '&lt;',
-        '>': '&gt;',
-        '&': '&amp;'
-      }[c]))}</${name}>`;
+      return `<${name}>${escapeXml(o)}</${name}>`;
     };
+    
     return `<?xml version="1.0" encoding="UTF-8"?>\n${convert(obj, rootName)}`;
   },
 
-  jsonToYaml(obj, indent = 0) {
-    const spaces = '  '.repeat(indent);
-    
-    if (Array.isArray(obj)) {
-      return obj.map(item => {
-        if (typeof item === 'object' && item !== null) {
-          const itemYaml = this.jsonToYaml(item, indent + 1);
-          return `${spaces}- ${itemYaml}`;
-        }
-        return `${spaces}- ${item}`;
-      }).join('\n');
+  // ========== JSON TO YAML ==========
+  
+  jsonToYaml(obj) {
+    try {
+      return YAML.dump(obj, {
+        indent: 2,
+        lineWidth: -1,
+        noRefs: true
+      });
+    } catch (e) {
+      throw new Error(`YAML conversion error: ${e.message}`);
     }
-    
-    if (typeof obj === 'object' && obj !== null) {
-      return Object.entries(obj).map(([key, value]) => {
-        if (value === null) {
-          return `${spaces}${key}:`;
-        }
-        if (typeof value === 'object') {
-          return `${spaces}${key}:\n${this.jsonToYaml(value, indent + 1)}`;
-        }
-        if (typeof value === 'string' && value.includes('\n')) {
-          return `${spaces}${key}: |\n${value.split('\n').map(l => `${spaces}  ${l}`).join('\n')}`;
-        }
-        return `${spaces}${key}: ${value}`;
-      }).join('\n');
-    }
-    
-    return `${spaces}${obj}`;
   },
 
+  // ========== JSON TO CSV ==========
+  
   jsonToCsv(data) {
-    const array = Array.isArray(data) ? data : [data];
+    // If data is not an array, convert to array
+    let array = Array.isArray(data) ? data : [data];
+    
+    // For arrays of objects, flatten if they have nested objects/arrays
+    const isFlat = array.every(item => 
+      Object.values(item).every(val => 
+        typeof val !== 'object' || val === null
+      )
+    );
+    
+    if (!isFlat) {
+      // If data has nested arrays of objects, extract them
+      let flatArray = [];
+      let arrayKey = null;
+      
+      for (const item of array) {
+        for (const [key, value] of Object.entries(item)) {
+          if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object') {
+            arrayKey = key;
+            flatArray = value;
+            break;
+          }
+        }
+        if (arrayKey) break;
+      }
+      
+      if (arrayKey && flatArray.length > 0) {
+        array = flatArray;
+      }
+    }
+    
     if (array.length === 0) return '';
     
-    const headers = Object.keys(array[0]);
+    // Extract all possible headers from all objects
+    const headers = [...new Set(array.flatMap(item => Object.keys(item)))];
+    
     const escapeCSV = (val) => {
-      if (typeof val === 'string' && (val.includes(',') || val.includes('"') || val.includes('\n'))) {
-        return `"${val.replace(/"/g, '""')}"`;
+      if (val === null || val === undefined) return '';
+      if (typeof val === 'object') return JSON.stringify(val);
+      const str = String(val);
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`;
       }
-      return String(val);
+      return str;
     };
     
     const csv = [
       headers.join(','),
       ...array.map(row => 
-        headers.map(h => escapeCSV(row[h] || '')).join(',')
+        headers.map(h => escapeCSV(row[h])).join(',')
       )
     ];
     return csv.join('\n');
@@ -73,7 +102,7 @@ export const DataUtils = {
 
   // ========== XML TO JSON ==========
   
-  xmlToJson(xml) {
+  xmlToJsonSync(xml) {
     try {
       const parser = new DOMParser();
       const doc = parser.parseFromString(xml, 'text/xml');
@@ -83,35 +112,44 @@ export const DataUtils = {
       }
       
       const convert = (node) => {
-        if (node.nodeType === 3) return node.nodeValue.trim();
+        if (node.nodeType === 3) {
+          const text = node.nodeValue.trim();
+          return text || null;
+        }
         
         const obj = {};
         
+        // Handle attributes
         if (node.attributes?.length > 0) {
-          obj['@attributes'] = {};
           for (let attr of node.attributes) {
-            obj['@attributes'][attr.name] = attr.value;
+            obj[attr.name] = attr.value;
           }
         }
         
+        // Handle children
+        const children = {};
         if (node.hasChildNodes()) {
           for (let child of node.childNodes) {
             if (child.nodeType === 3) {
               const text = child.nodeValue.trim();
-              if (text) return text;
-            } else {
+              if (text && !obj['#text']) obj['#text'] = text;
+            } else if (child.nodeType === 1) {
               const name = child.nodeName;
               const value = convert(child);
-              if (obj[name]) {
-                if (!Array.isArray(obj[name])) obj[name] = [obj[name]];
-                obj[name].push(value);
+              
+              if (children[name]) {
+                if (!Array.isArray(children[name])) {
+                  children[name] = [children[name]];
+                }
+                children[name].push(value);
               } else {
-                obj[name] = value;
+                children[name] = value;
               }
             }
           }
         }
-        return obj;
+        
+        return { ...obj, ...children };
       };
       
       return convert(doc.documentElement);
@@ -120,72 +158,42 @@ export const DataUtils = {
     }
   },
 
+  // Async version - for compatibility
+  async xmlToJson(xml) {
+    return this.xmlToJsonSync(xml);
+  },
+
   // ========== YAML TO JSON ==========
   
   yamlToJson(yaml) {
-    const lines = yaml.split('\n');
-    const result = {};
-    const stack = [{ obj: result, indent: -1, isArray: false }];
-    
-    for (const line of lines) {
-      if (line.trim() === '' || line.trim().startsWith('#')) continue;
-      
-      const indent = line.search(/\S/);
-      const trimmed = line.trim();
-      
-      // Pop stack until we find the right indent level
-      while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
-        stack.pop();
-      }
-      
-      const parent = stack[stack.length - 1];
-      
-      if (trimmed.startsWith('-')) {
-        // Array item
-        const value = trimmed.slice(1).trim();
-        if (!Array.isArray(parent.obj)) {
-          const arr = [];
-          const key = Object.keys(parent.obj).pop();
-          if (key) parent.obj[key] = arr;
-          parent.obj = arr;
-        }
-        if (value) {
-          parent.obj.push(value);
-        }
-      } else if (trimmed.includes(':')) {
-        const colonIdx = trimmed.indexOf(':');
-        const key = trimmed.substring(0, colonIdx).trim();
-        const value = trimmed.substring(colonIdx + 1).trim();
-        
-        if (value) {
-          parent.obj[key] = value;
-        } else {
-          parent.obj[key] = {};
-          stack.push({ obj: parent.obj[key], indent, isArray: false });
-        }
-      }
+    try {
+      const result = YAML.load(yaml);
+      return result || {};
+    } catch (e) {
+      throw new Error(`YAML Parse Error: ${e.message}`);
     }
-    
-    return result;
   },
 
   // ========== CSV TO JSON ==========
   
   csvToJson(csv) {
-    const lines = csv.split('\n').filter(l => l.trim());
-    if (lines.length === 0) return [];
-    
-    // Parse CSV header
-    const headers = this.parseCSVLine(lines[0]);
-    
-    return lines.slice(1).map(line => {
-      const values = this.parseCSVLine(line);
-      const obj = {};
-      headers.forEach((h, i) => {
-        obj[h] = values[i] || '';
+    try {
+      const lines = csv.split('\n').filter(l => l.trim());
+      if (lines.length === 0) return [];
+      
+      const headers = this.parseCSVLine(lines[0]);
+      
+      return lines.slice(1).map(line => {
+        const values = this.parseCSVLine(line);
+        const obj = {};
+        headers.forEach((h, i) => {
+          obj[h.trim()] = values[i] || '';
+        });
+        return obj;
       });
-      return obj;
-    });
+    } catch (e) {
+      throw new Error(`CSV Parse Error: ${e.message}`);
+    }
   },
 
   parseCSVLine(line) {
@@ -205,13 +213,13 @@ export const DataUtils = {
           insideQuotes = !insideQuotes;
         }
       } else if (char === ',' && !insideQuotes) {
-        result.push(current.trim());
+        result.push(current);
         current = '';
       } else {
         current += char;
       }
     }
-    result.push(current.trim());
+    result.push(current);
     return result;
   },
 
@@ -223,12 +231,15 @@ export const DataUtils = {
         return JSON.stringify(JSON.parse(text), null, 2);
       }
       if (format === 'xml') {
-        let formatted = text.replace(/></g, '>\n<');
-        formatted = formatted.replace(/^\s+/gm, (match) => {
-          const level = Math.floor(match.length / 2);
-          return '  '.repeat(level);
-        });
-        return formatted;
+        return text
+          .replace(/></g, '>\n<')
+          .replace(/^(<[^?])/m, '<?xml version="1.0" encoding="UTF-8"?>\n$1');
+      }
+      if (format === 'yaml') {
+        return YAML.dump(YAML.load(text), { indent: 2 });
+      }
+      if (format === 'csv') {
+        return text;
       }
       return text;
     } catch (e) {
@@ -242,7 +253,10 @@ export const DataUtils = {
         return JSON.stringify(JSON.parse(text));
       }
       if (format === 'xml') {
-        return text.replace(/>\s+</g, '><').trim();
+        return text.replace(/>\s+</g, '><').replace(/\s+/g, ' ').trim();
+      }
+      if (format === 'yaml') {
+        return YAML.dump(YAML.load(text), { indent: 2 });
       }
       return text;
     } catch (e) {
@@ -250,145 +264,192 @@ export const DataUtils = {
     }
   },
 
-  // ========== QUERY ==========
+  // ========== QUERY - JSONPath ==========
   
   queryJsonPath(data, path) {
-  try {
-    if (!data) return null;
-    
-    let cleanPath = path.trim();
-    cleanPath = cleanPath.replace(/^\$\.?/, '');
-    
-    if (!cleanPath) return data;
-    
-    const parts = [];
-    let current = '';
-    let inBracket = false;
-    
-    for (let char of cleanPath) {
-      if (char === '[') {
-        if (current) parts.push(current);
-        current = '';
-        inBracket = true;
-        parts.push('[');
-      } else if (char === ']') {
-        if (inBracket) {
-          parts[parts.length - 1] += current;
-          parts[parts.length - 1] += ']';
-          current = '';
-          inBracket = false;
-        }
-      } else if (char === '.' && !inBracket) {
-        if (current) parts.push(current);
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-    if (current) parts.push(current);
-    
-    let result = data;
-    
-    for (let part of parts) {
-      if (!result) return null;
+    try {
+      if (!data) return null;
       
-      if (part.includes('[')) {
-        const match = part.match(/(\w+)\[(\d+)\]/);
-        if (match) {
-          const key = match[1];
-          const index = parseInt(match[2]);
-          result = result[key]?.[index];
+      let cleanPath = path.trim();
+      cleanPath = cleanPath.replace(/^\$\.?/, '');
+      
+      if (!cleanPath) return data;
+      
+      // Parse path into parts
+      const parts = [];
+      let current = '';
+      let inBracket = false;
+      
+      for (let char of cleanPath) {
+        if (char === '[') {
+          if (current) parts.push(current);
+          current = '[';
+          inBracket = true;
+        } else if (char === ']') {
+          if (inBracket) {
+            current += ']';
+            parts.push(current);
+            current = '';
+            inBracket = false;
+          }
+        } else if (char === '.' && !inBracket) {
+          if (current && current !== '[') parts.push(current);
+          current = '';
         } else {
+          current += char;
+        }
+      }
+      if (current && current !== '[') parts.push(current);
+      
+      let result = data;
+      
+      for (let part of parts) {
+        if (result === null || result === undefined) return null;
+        
+        // Handle array patterns: key[index] or key[*]
+        const arrayMatch = part.match(/^(\w+)\[(\d+|\*)\]$/);
+        if (arrayMatch) {
+          const key = arrayMatch[1];
+          const indexStr = arrayMatch[2];
+          
+          if (!(key in result)) return null;
+          if (!Array.isArray(result[key]) && indexStr !== '*') {
+            // Single item, try to access directly
+            result = result[key];
+            continue;
+          }
+          
+          if (indexStr === '*') {
+            // Wildcard - return all items
+            if (Array.isArray(result[key])) {
+              result = result[key];
+            } else {
+              result = [result[key]];
+            }
+          } else {
+            const index = parseInt(indexStr);
+            result = result[key][index];
+          }
+        } else {
+          // Regular property access
           result = result[part];
         }
-      } else {
-        result = result[part];
       }
+      
+      return result;
+    } catch (e) {
+      throw new Error(`Query Error: ${e.message}`);
     }
-    
-    return result;
-  } catch (e) {
-    console.error('Query error:', e);
-    return null;
-  }
-},
-  // ========== DIFF ==========
+  },
+
+  // ========== DIFF - Compare Objects ==========
   
   diffObjects(obj1, obj2, path = '') {
     const diffs = [];
-    const keys = new Set([...Object.keys(obj1 || {}), ...Object.keys(obj2 || {})]);
+    const keys = new Set([
+      ...Object.keys(obj1 || {}), 
+      ...Object.keys(obj2 || {})
+    ]);
     
     keys.forEach(key => {
       const fullPath = path ? `${path}.${key}` : key;
       const val1 = obj1?.[key];
       const val2 = obj2?.[key];
       
+      // Key only in obj2
       if (!(key in (obj1 || {}))) {
-        diffs.push({ type: 'added', path: fullPath, value: val2 });
-      } else if (!(key in (obj2 || {}))) {
-        diffs.push({ type: 'removed', path: fullPath, value: val1 });
-      } else if (JSON.stringify(val1) !== JSON.stringify(val2)) {
-        if (typeof val1 === 'object' && typeof val2 === 'object' && val1 !== null && val2 !== null) {
+        diffs.push({ 
+          type: 'added', 
+          path: fullPath, 
+          value: val2 
+        });
+      } 
+      // Key only in obj1
+      else if (!(key in (obj2 || {}))) {
+        diffs.push({ 
+          type: 'removed', 
+          path: fullPath, 
+          value: val1 
+        });
+      } 
+      // Key in both - check if different
+      else if (JSON.stringify(val1) !== JSON.stringify(val2)) {
+        // Both are objects (but NOT arrays) - recurse
+        if (typeof val1 === 'object' && typeof val2 === 'object' && 
+            val1 !== null && val2 !== null && 
+            !Array.isArray(val1) && !Array.isArray(val2)) {
           diffs.push(...this.diffObjects(val1, val2, fullPath));
-        } else {
-          diffs.push({ type: 'changed', path: fullPath, old: val1, new: val2 });
+        } 
+        // Value changed
+        else {
+          diffs.push({ 
+            type: 'changed', 
+            path: fullPath, 
+            old: val1, 
+            new: val2 
+          });
         }
       }
     });
     
     return diffs;
   },
-  generateMockData(schema) {
-  const generate = (s) => {
-    if (!s) return null;
-    
-    if (Array.isArray(s.type)) {
-      return generate({ ...s, type: s.type[0] });
-    }
-    
-    switch (s.type) {
-      case 'object':
-        const obj = {};
-        if (s.properties) {
-          Object.entries(s.properties).forEach(([key, prop]) => {
-            obj[key] = generate(prop);
-          });
-        }
-        return obj;
-      
-      case 'array':
-        const items = s.items || { type: 'string' };
-        const arrayLength = s.minItems || 3;
-        return Array(arrayLength).fill(null).map(() => generate(items));
-      
-      case 'string':
-        if (s.enum) return s.enum[0];
-        if (s.example) return s.example;
-        if (s.format === 'email') return 'user@example.com';
-        if (s.format === 'date') return new Date().toISOString().split('T')[0];
-        if (s.format === 'uri') return 'https://example.com';
-        return 'sample text';
-      
-      case 'number':
-      case 'integer':
-        if (s.enum) return s.enum[0];
-        if (s.example !== undefined) return s.example;
-        if (s.minimum !== undefined) return s.minimum;
-        return 42;
-      
-      case 'boolean':
-        return true;
-      
-      case 'null':
-        return null;
-      
-      default:
-        return null;
-    }
-  };
+
+  // ========== MOCK DATA GENERATION ==========
   
-  return generate(schema);
-}
+  generateMockData(schema) {
+    const generate = (s) => {
+      if (!s) return null;
+      
+      if (Array.isArray(s.type)) {
+        return generate({ ...s, type: s.type[0] });
+      }
+      
+      switch (s.type) {
+        case 'object':
+          const obj = {};
+          if (s.properties) {
+            Object.entries(s.properties).forEach(([key, prop]) => {
+              obj[key] = generate(prop);
+            });
+          }
+          return obj;
+        
+        case 'array':
+          const items = s.items || { type: 'string' };
+          const arrayLength = s.minItems || 3;
+          return Array(arrayLength).fill(null).map(() => generate(items));
+        
+        case 'string':
+          if (s.enum) return s.enum[0];
+          if (s.example) return s.example;
+          if (s.format === 'email') return 'user@example.com';
+          if (s.format === 'date') return new Date().toISOString().split('T')[0];
+          if (s.format === 'uri') return 'https://example.com';
+          if (s.format === 'date-time') return new Date().toISOString();
+          return 'sample text';
+        
+        case 'number':
+        case 'integer':
+          if (s.enum) return s.enum[0];
+          if (s.example !== undefined) return s.example;
+          if (s.minimum !== undefined) return s.minimum;
+          if (s.type === 'integer') return 42;
+          return 3.14;
+        
+        case 'boolean':
+          return true;
+        
+        case 'null':
+          return null;
+        
+        default:
+          return null;
+      }
+    };
+    
+    return generate(schema);
+  }
 };
 
 export default DataUtils;
