@@ -267,81 +267,90 @@ export const DataUtils = {
   // ========== QUERY - JSONPath ==========
   
   queryJsonPath(data, path) {
-    try {
-      if (!data) return null;
+  try {
+    if (!data) return null;
+    
+    let cleanPath = path.trim();
+    cleanPath = cleanPath.replace(/^\$\.?/, '');
+    
+    if (!cleanPath) return data;
+    
+    const parts = [];
+    let current = '';
+    let inBracket = false;
+    
+    for (let i = 0; i < cleanPath.length; i++) {
+      const char = cleanPath[i];
       
-      let cleanPath = path.trim();
-      cleanPath = cleanPath.replace(/^\$\.?/, '');
-      
-      if (!cleanPath) return data;
-      
-      // Parse path into parts
-      const parts = [];
-      let current = '';
-      let inBracket = false;
-      
-      for (let char of cleanPath) {
-        if (char === '[') {
-          if (current) parts.push(current);
-          current = '[';
-          inBracket = true;
-        } else if (char === ']') {
-          if (inBracket) {
-            current += ']';
-            parts.push(current);
-            current = '';
-            inBracket = false;
-          }
-        } else if (char === '.' && !inBracket) {
-          if (current && current !== '[') parts.push(current);
+      if (char === '[') {
+        if (current) {
+          parts.push(current);
           current = '';
-        } else {
-          current += char;
         }
+        inBracket = true;
+      } else if (char === ']') {
+        inBracket = false;
+        parts.push(`[${current}]`);
+        current = '';
+      } else if (char === '.' && !inBracket) {
+        if (current) {
+          parts.push(current);
+          current = '';
+        }
+      } else {
+        current += char;
       }
-      if (current && current !== '[') parts.push(current);
+    }
+    if (current) {
+      parts.push(current);
+    }
+    
+    let result = data;
+    let i = 0;
+    
+    while (i < parts.length && result !== null && result !== undefined) {
+      const part = parts[i];
       
-      let result = data;
-      
-      for (let part of parts) {
-        if (result === null || result === undefined) return null;
-        
-        // Handle array patterns: key[index] or key[*]
-        const arrayMatch = part.match(/^(\w+)\[(\d+|\*)\]$/);
-        if (arrayMatch) {
-          const key = arrayMatch[1];
-          const indexStr = arrayMatch[2];
+      if (part.startsWith('[')) {
+        const indexMatch = part.match(/^\[(\d+|\*)\]$/);
+        if (indexMatch) {
+          const indexStr = indexMatch[1];
           
-          if (!(key in result)) return null;
-          if (!Array.isArray(result[key]) && indexStr !== '*') {
-            // Single item, try to access directly
-            result = result[key];
-            continue;
+          if (!Array.isArray(result)) {
+            return null;
           }
           
           if (indexStr === '*') {
-            // Wildcard - return all items
-            if (Array.isArray(result[key])) {
-              result = result[key];
+            let allItems = result;
+            i++;
+            if (i < parts.length) {
+              const remainingPath = parts.slice(i).join('.');
+              const extracted = allItems.map(item => {
+                return this.queryJsonPath(item, '$.' + remainingPath);
+              });
+              return extracted.filter(e => e !== null);
             } else {
-              result = [result[key]];
+              return allItems;
             }
           } else {
             const index = parseInt(indexStr);
-            result = result[key][index];
+            result = result[index];
+            i++;
           }
         } else {
-          // Regular property access
-          result = result[part];
+          return null;
         }
+      } else {
+        result = result[part];
+        i++;
       }
-      
-      return result;
-    } catch (e) {
-      throw new Error(`Query Error: ${e.message}`);
     }
-  },
-
+    
+    return result;
+  } catch (e) {
+    throw new Error(`Query Error: ${e.message}`);
+  }
+},
   // ========== DIFF - Compare Objects ==========
   
   diffObjects(obj1, obj2, path = '') {

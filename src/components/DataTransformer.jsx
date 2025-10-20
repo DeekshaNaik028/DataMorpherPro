@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import {
   FileJson, FileCode, Database, GitCompare, Sparkles,
   Eye, Code2, CheckCircle, AlertCircle, Copy, Download,
-  Settings, Wand2, RotateCw
+  Settings, Wand2, RotateCw, Upload
 } from 'lucide-react';
+import { useTheme, ThemeToggle } from './ThemeToggle';
+import { useKeyboardShortcuts, KeyboardShortcutsButton } from './KeyboardShortcuts';
 import TreeView from './TreeView';
 import DataUtils from '../utils/DataUtils';
 import Validators from '../utils/validators';
@@ -39,7 +41,11 @@ const DataTransformer = () => {
     }
   }, null, 2));
   const [codeLanguage, setCodeLanguage] = useState('typescript');
+  // Dark mode from separate component
+  const [darkMode, setDarkMode] = useTheme();
 
+  // Keyboard shortcuts from separate component
+  useKeyboardShortcuts(setActiveTab);
   const formats = [
     { id: 'json', label: 'JSON', icon: FileJson },
     { id: 'xml', label: 'XML', icon: FileCode },
@@ -162,11 +168,40 @@ const DataTransformer = () => {
       setValidation({ valid: false, message: `Code Generation Error: ${e.message}` });
     }
   };
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
 
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target.result;
+        setInput(content);
+
+        const extension = file.name.split('.').pop().toLowerCase();
+        const formatMap = {
+          'json': 'json',
+          'xml': 'xml',
+          'yaml': 'yaml',
+          'yml': 'yaml',
+          'csv': 'csv'
+        };
+
+        const detectedFormat = formatMap[extension];
+        if (detectedFormat) {
+          setInputFormat(detectedFormat);
+        }
+      } catch (error) {
+        alert(`Error: ${error.message}`);
+      }
+    };
+
+    reader.readAsText(file);
+  };
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
   };
-
+  
   const downloadFile = (content, filename) => {
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -182,21 +217,32 @@ const DataTransformer = () => {
   }, [inputFormat, outputFormat]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
+    <div className={`min-h-screen p-6 transition-colors ${
+      darkMode 
+        ? 'bg-gradient-to-br from-slate-900 to-slate-800' 
+        : 'bg-gradient-to-br from-slate-50 to-blue-50'
+    }`}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex items-center gap-3 mb-4">
+        className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}
+         <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
               <FileJson className="text-white" size={24} />
             </div>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-purple-400">
                 Data Transformer Pro
               </h1>
-              <p className="text-gray-600">Convert, validate, and transform data between formats</p>
+              <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Convert, validate, and transform data between formats</p>
             </div>
           </div>
+          
+          <div className="flex items-center gap-2">
+            <ThemeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
+            <KeyboardShortcutsButton darkMode={darkMode} />
+          </div>
+        </div>
 
           {/* Tabs */}
           <div className="flex gap-2 overflow-x-auto pb-2">
@@ -604,5 +650,135 @@ const DataTransformer = () => {
     </div>
   );
 };
+const handleFileUpload = (event, setInput, setInputFormat) => {
+  const file = event.target.files[0];
+  if (!file) return;
 
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const content = e.target.result;
+      setInput(content);
+
+      // Detect format from file extension
+      const extension = file.name.split('.').pop().toLowerCase();
+      const formatMap = {
+        'json': 'json',
+        'xml': 'xml',
+        'yaml': 'yaml',
+        'yml': 'yaml',
+        'csv': 'csv'
+      };
+
+      const detectedFormat = formatMap[extension];
+      if (detectedFormat) {
+        setInputFormat(detectedFormat);
+      }
+
+      alert(`✅ File loaded: ${file.name}`);
+    } catch (error) {
+      alert(`❌ Error reading file: ${error.message}`);
+    }
+  };
+
+  reader.onerror = () => {
+    alert('❌ Error reading file');
+  };
+
+  reader.readAsText(file);
+};
+
+// File Download Handler
+const downloadFile = (content, filename) => {
+  if (!content) {
+    alert('❌ No content to download');
+    return;
+  }
+
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename || 'output.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+// JSX Components for File Upload/Download UI
+
+// Upload Button Component
+export const FileUploadButton = ({ onUpload }) => {
+  const fileInputRef = React.useRef(null);
+
+  return (
+    <>
+      <button
+        onClick={() => fileInputRef.current?.click()}
+        className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
+      >
+        <Upload size={16} />
+        Upload File
+      </button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json,.xml,.yaml,.yml,.csv"
+        onChange={onUpload}
+        style={{ display: 'none' }}
+      />
+    </>
+  );
+};
+
+// Download Button Component
+export const FileDownloadButton = ({ content, filename = 'output.txt' }) => {
+  return (
+    <button
+      onClick={() => downloadFile(content, filename)}
+      disabled={!content}
+      className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 disabled:bg-gray-400 transition-colors text-sm font-medium"
+    >
+      <Download size={16} />
+      Download
+    </button>
+  );
+};
+
+// Quick Copy Button (Enhanced)
+export const QuickCopyButton = ({ content }) => {
+  const [copied, setCopied] = React.useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      alert('Failed to copy');
+    }
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
+        copied
+          ? 'bg-green-500 text-white'
+          : 'bg-blue-500 text-white hover:bg-blue-600'
+      }`}
+    >
+      {copied ? (
+        <>
+          <Check size={16} />
+          Copied!
+        </>
+      ) : (
+        <>
+          <Copy size={16} />
+          Copy
+        </>
+      )}
+    </button>
+  );
+};
 export default DataTransformer;
