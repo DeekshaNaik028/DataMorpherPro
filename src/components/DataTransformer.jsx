@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   FileJson, FileCode, Database, GitCompare, Sparkles,
   Eye, Code2, CheckCircle, AlertCircle, Copy, Download,
-  Settings, Wand2, RotateCw, Upload
+  Wand2, Upload
 } from 'lucide-react';
 import { useTheme, ThemeToggle } from './ThemeToggle';
 import { useKeyboardShortcuts, KeyboardShortcutsButton } from './KeyboardShortcuts';
@@ -11,15 +11,138 @@ import DataUtils from '../utils/DataUtils';
 import Validators from '../utils/validators';
 import CodeGenerators from '../utils/codeGenerators';
 
+// Format configuration
+const FORMATS = [
+  { id: 'json', label: 'JSON', icon: FileJson },
+  { id: 'xml', label: 'XML', icon: FileCode },
+  { id: 'yaml', label: 'YAML', icon: Database },
+  { id: 'csv', label: 'CSV', icon: Database }
+];
+
+const LANGUAGES = [
+  { id: 'typescript', label: 'TypeScript' },
+  { id: 'python', label: 'Python' },
+  { id: 'java', label: 'Java' },
+  { id: 'go', label: 'Go' }
+];
+
+const TABS = [
+  { id: 'convert', label: 'Convert', icon: FileJson },
+  { id: 'tree', label: 'Tree View', icon: Eye },
+  { id: 'query', label: 'Query', icon: Code2 },
+  { id: 'validate', label: 'Validate', icon: CheckCircle },
+  { id: 'diff', label: 'Diff', icon: GitCompare },
+  { id: 'mock', label: 'Mock Data', icon: Sparkles },
+  { id: 'generate', label: 'Generate Code', icon: Code2 }
+];
+
+// File Upload Component
+const FileUploadButton = ({ onUpload, darkMode }) => {
+  const fileInputRef = React.useRef(null);
+
+  return (
+    <>
+      <button
+        onClick={() => fileInputRef.current?.click()}
+        className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
+      >
+        <Upload size={16} />
+        Upload File
+      </button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json,.xml,.yaml,.yml,.csv"
+        onChange={onUpload}
+        style={{ display: 'none' }}
+      />
+    </>
+  );
+};
+
+// Action Buttons Component
+const ActionButtons = ({ onCopy, onDownload, content, filename, darkMode }) => (
+  <div className="flex gap-2 flex-wrap">
+    <button
+      onClick={() => onCopy(content)}
+      className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
+    >
+      <Copy size={16} />
+      Copy
+    </button>
+    <button
+      onClick={() => onDownload(content, filename)}
+      className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
+      disabled={!content}
+    >
+      <Download size={16} />
+      Download
+    </button>
+  </div>
+);
+
+// Format Selector Component
+const FormatSelector = ({ formats, activeFormat, onSelect, darkMode }) => (
+  <div className="flex gap-2 flex-wrap">
+    {formats.map(fmt => {
+      const Icon = fmt.icon;
+      return (
+        <button
+          key={fmt.id}
+          onClick={() => onSelect(fmt.id)}
+          className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1 transition-all ${
+            activeFormat === fmt.id
+              ? 'bg-blue-500 text-white'
+              : darkMode 
+                ? 'bg-slate-700 text-gray-300 hover:bg-slate-600' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          <Icon size={14} />
+          {fmt.label}
+        </button>
+      );
+    })}
+  </div>
+);
+
+// Main DataTransformer Component
 const DataTransformer = () => {
   const [input, setInput] = useState(JSON.stringify({
     name: "John Doe",
     age: 30,
     email: "john@example.com",
+    isActive: true,
     skills: ["JavaScript", "React", "Node.js"],
     address: {
       city: "New York",
-      zip: "10001"
+      zip: "10001",
+      country: "USA"
+    },
+    projects: [
+      {
+        id: 1,
+        title: "E-commerce Platform",
+        status: "completed",
+        tech: ["React", "Node.js", "MongoDB"]
+      },
+      {
+        id: 2,
+        title: "Task Manager",
+        status: "in-progress",
+        tech: ["Vue", "Firebase"]
+      },
+      {
+        id: 3,
+        title: "Blog System",
+        status: "planning",
+        tech: ["Next.js", "PostgreSQL"]
+      }
+    ],
+    social: {
+      github: "johndoe",
+      linkedin: "john-doe",
+      twitter: "@johndoe"
     }
   }, null, 2));
 
@@ -41,30 +164,15 @@ const DataTransformer = () => {
     }
   }, null, 2));
   const [codeLanguage, setCodeLanguage] = useState('typescript');
-  // Dark mode from separate component
+
   const [darkMode, setDarkMode] = useTheme();
-
-  // Keyboard shortcuts from separate component
   useKeyboardShortcuts(setActiveTab);
-  const formats = [
-    { id: 'json', label: 'JSON', icon: FileJson },
-    { id: 'xml', label: 'XML', icon: FileCode },
-    { id: 'yaml', label: 'YAML', icon: Database },
-    { id: 'csv', label: 'CSV', icon: Database }
-  ];
 
-  const languages = [
-    { id: 'typescript', label: 'TypeScript' },
-    { id: 'python', label: 'Python' },
-    { id: 'java', label: 'Java' },
-    { id: 'go', label: 'Go' }
-  ];
-
+  // Conversion logic
   const convert = async () => {
     try {
       let data;
 
-      // Parse input based on format
       if (inputFormat === 'json') {
         data = JSON.parse(input);
       } else if (inputFormat === 'xml') {
@@ -75,7 +183,6 @@ const DataTransformer = () => {
         data = DataUtils.csvToJson(input);
       }
 
-      // Convert to output format
       let result = '';
       if (outputFormat === 'json') {
         result = JSON.stringify(data, null, 2);
@@ -168,6 +275,7 @@ const DataTransformer = () => {
       setValidation({ valid: false, message: `Code Generation Error: ${e.message}` });
     }
   };
+
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -198,16 +306,22 @@ const DataTransformer = () => {
 
     reader.readAsText(file);
   };
+
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
   };
-  
+
   const downloadFile = (content, filename) => {
+    if (!content) {
+      alert('No content to download');
+      return;
+    }
+
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = filename;
+    a.download = filename || 'output.txt';
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -224,37 +338,29 @@ const DataTransformer = () => {
     }`}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}
-         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <FileJson className="text-white" size={24} />
+        <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6 mb-6`}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <FileJson className="text-white" size={24} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-purple-400">
+                  Data Transformer Pro
+                </h1>
+                <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Convert, validate, and transform data between formats</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-purple-400">
-                Data Transformer Pro
-              </h1>
-              <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Convert, validate, and transform data between formats</p>
+
+            <div className="flex items-center gap-2">
+              <ThemeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
+              <KeyboardShortcutsButton darkMode={darkMode} />
             </div>
           </div>
-          
-          <div className="flex items-center gap-2">
-            <ThemeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
-            <KeyboardShortcutsButton darkMode={darkMode} />
-          </div>
-        </div>
 
           {/* Tabs */}
           <div className="flex gap-2 overflow-x-auto pb-2">
-            {[
-              { id: 'convert', label: 'Convert', icon: FileJson },
-              { id: 'tree', label: 'Tree View', icon: Eye },
-              { id: 'query', label: 'Query', icon: Code2 },
-              { id: 'validate', label: 'Validate', icon: CheckCircle },
-              { id: 'diff', label: 'Diff', icon: GitCompare },
-              { id: 'mock', label: 'Mock Data', icon: Sparkles },
-              { id: 'generate', label: 'Generate Code', icon: Code2 }
-            ].map(tab => {
+            {TABS.map(tab => {
               const Icon = tab.icon;
               return (
                 <button
@@ -263,7 +369,7 @@ const DataTransformer = () => {
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'bg-blue-500 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : `${darkMode ? 'bg-slate-700 text-gray-300' : 'bg-gray-100 text-gray-700'} hover:${darkMode ? 'bg-slate-600' : 'bg-gray-200'}`
                   }`}
                 >
                   <Icon size={18} />
@@ -277,33 +383,28 @@ const DataTransformer = () => {
         {/* Convert Tab */}
         {activeTab === 'convert' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-800">Input</h2>
-                <div className="flex gap-2 flex-wrap">
-                  {formats.map(fmt => (
-                    <button
-                      key={fmt.id}
-                      onClick={() => setInputFormat(fmt.id)}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1 transition-all ${
-                        inputFormat === fmt.id
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      <fmt.icon size={14} />
-                      {fmt.label}
-                    </button>
-                  ))}
-                </div>
+                <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Input</h2>
+                <FormatSelector 
+                  formats={FORMATS} 
+                  activeFormat={inputFormat} 
+                  onSelect={setInputFormat}
+                  darkMode={darkMode}
+                />
               </div>
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                className="w-full h-96 p-4 border-2 border-gray-200 rounded-lg font-mono text-sm focus:outline-none focus:border-blue-400 resize-none"
+                className={`w-full h-96 p-4 border-2 rounded-lg font-mono text-sm focus:outline-none resize-none ${
+                  darkMode
+                    ? 'bg-slate-700 text-white border-slate-600 focus:border-blue-400'
+                    : 'bg-white text-gray-800 border-gray-200 focus:border-blue-400'
+                }`}
                 placeholder="Enter your data here..."
               />
               <div className="flex gap-2 mt-4 flex-wrap">
+                <FileUploadButton onUpload={handleFileUpload} darkMode={darkMode} />
                 <button
                   onClick={() => setInput(DataUtils.beautify(input, inputFormat))}
                   className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
@@ -319,47 +420,34 @@ const DataTransformer = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-800">Output</h2>
-                <div className="flex gap-2 flex-wrap">
-                  {formats.map(fmt => (
-                    <button
-                      key={fmt.id}
-                      onClick={() => setOutputFormat(fmt.id)}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1 transition-all ${
-                        outputFormat === fmt.id
-                          ? 'bg-purple-500 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      <fmt.icon size={14} />
-                      {fmt.label}
-                    </button>
-                  ))}
-                </div>
+                <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Output</h2>
+                <FormatSelector 
+                  formats={FORMATS} 
+                  activeFormat={outputFormat} 
+                  onSelect={setOutputFormat}
+                  darkMode={darkMode}
+                />
               </div>
               <textarea
                 value={output}
                 readOnly
-                className="w-full h-96 p-4 border-2 border-gray-200 rounded-lg font-mono text-sm bg-gray-50 resize-none"
+                className={`w-full h-96 p-4 border-2 rounded-lg font-mono text-sm resize-none ${
+                  darkMode
+                    ? 'bg-slate-700 text-white border-slate-600'
+                    : 'bg-gray-50 text-gray-800 border-gray-200'
+                }`}
                 placeholder="Converted output will appear here..."
               />
-              <div className="flex gap-2 mt-4 flex-wrap">
-                <button
-                  onClick={() => copyToClipboard(output)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
-                >
-                  <Copy size={16} />
-                  Copy
-                </button>
-                <button
-                  onClick={() => downloadFile(output, `output.${outputFormat}`)}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
-                >
-                  <Download size={16} />
-                  Download
-                </button>
+              <div className="mt-4">
+                <ActionButtons 
+                  onCopy={copyToClipboard}
+                  onDownload={downloadFile}
+                  content={output}
+                  filename={`output.${outputFormat}`}
+                  darkMode={darkMode}
+                />
               </div>
             </div>
           </div>
@@ -367,15 +455,19 @@ const DataTransformer = () => {
 
         {/* Tree View Tab */}
         {activeTab === 'tree' && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Data Tree View</h2>
-            <div className="border-2 border-gray-200 rounded-lg p-4 max-h-[600px] overflow-auto bg-gray-50">
+          <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+            <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Data Tree View</h2>
+            <div className={`border-2 rounded-lg p-4 max-h-[600px] overflow-auto ${
+              darkMode
+                ? 'bg-slate-700 border-slate-600'
+                : 'bg-gray-50 border-gray-200'
+            }`}>
               {(() => {
                 try {
                   const data = JSON.parse(input);
-                  return <TreeView data={data} />;
+                  return <TreeView data={data} darkMode={darkMode} />;
                 } catch (e) {
-                  return <div className="text-red-500 font-mono text-sm">Invalid JSON: {e.message}</div>;
+                  return <div className={`${darkMode ? 'text-red-400' : 'text-red-500'} font-mono text-sm`}>Invalid JSON: {e.message}</div>;
                 }
               })()}
             </div>
@@ -384,17 +476,21 @@ const DataTransformer = () => {
 
         {/* Query Tab */}
         {activeTab === 'query' && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">JSONPath Query Tester</h2>
+          <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+            <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>JSONPath Query Tester</h2>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">JSONPath Expression</label>
-              <p className="text-xs text-gray-500 mb-3">Examples: $.name, $.skills[0], $.address.city, $.users[*].id</p>
+              <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>JSONPath Expression</label>
+              <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'} mb-3`}>Examples: $.name, $.skills[0], $.address.city, $.users[*].id</p>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
+                  className={`flex-1 px-4 py-2 border-2 rounded-lg focus:outline-none ${
+                    darkMode
+                      ? 'bg-slate-700 text-white border-slate-600 focus:border-blue-400'
+                      : 'bg-white text-gray-800 border-gray-200 focus:border-blue-400'
+                  }`}
                   placeholder="$.users[0].name"
                 />
                 <button
@@ -405,9 +501,17 @@ const DataTransformer = () => {
                 </button>
               </div>
             </div>
-            <div className="border-2 border-gray-200 rounded-lg p-4 bg-gray-50">
-              <h3 className="font-medium text-gray-700 mb-3">Result:</h3>
-              <pre className="bg-white p-4 rounded-lg overflow-auto max-h-96 text-sm font-mono border border-gray-200">
+            <div className={`border-2 rounded-lg p-4 ${
+              darkMode
+                ? 'bg-slate-700 border-slate-600'
+                : 'bg-gray-50 border-gray-200'
+            }`}>
+              <h3 className={`font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-3`}>Result:</h3>
+              <pre className={`p-4 rounded-lg overflow-auto max-h-96 text-sm font-mono border ${
+                darkMode
+                  ? 'bg-slate-600 text-white border-slate-500'
+                  : 'bg-white text-gray-800 border-gray-200'
+              }`}>
                 {queryResult || 'No result yet...'}
               </pre>
             </div>
@@ -416,8 +520,8 @@ const DataTransformer = () => {
 
         {/* Validate Tab */}
         {activeTab === 'validate' && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Data Validation</h2>
+          <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+            <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Data Validation</h2>
             <button
               onClick={validateInput}
               className="mb-6 px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium"
@@ -427,19 +531,19 @@ const DataTransformer = () => {
             {validation && (
               <div className={`flex items-start gap-4 p-4 rounded-lg border-2 ${
                 validation.valid
-                  ? 'bg-green-50 border-green-200'
-                  : 'bg-red-50 border-red-200'
+                  ? darkMode ? 'bg-green-900 border-green-700' : 'bg-green-50 border-green-200'
+                  : darkMode ? 'bg-red-900 border-red-700' : 'bg-red-50 border-red-200'
               }`}>
                 {validation.valid ? (
-                  <CheckCircle className="text-green-600 flex-shrink-0" size={28} />
+                  <CheckCircle className={`${darkMode ? 'text-green-400' : 'text-green-600'} flex-shrink-0`} size={28} />
                 ) : (
-                  <AlertCircle className="text-red-600 flex-shrink-0" size={28} />
+                  <AlertCircle className={`${darkMode ? 'text-red-400' : 'text-red-600'} flex-shrink-0`} size={28} />
                 )}
                 <div className="flex-1">
-                  <h3 className={`font-bold text-lg ${validation.valid ? 'text-green-800' : 'text-red-800'}`}>
+                  <h3 className={`font-bold text-lg ${validation.valid ? (darkMode ? 'text-green-300' : 'text-green-800') : (darkMode ? 'text-red-300' : 'text-red-800')}`}>
                     {validation.valid ? '✓ Valid' : '✗ Invalid'}
                   </h3>
-                  <p className={`mt-1 ${validation.valid ? 'text-green-700' : 'text-red-700'}`}>
+                  <p className={validation.valid ? (darkMode ? 'text-green-200' : 'text-green-700') : (darkMode ? 'text-red-200' : 'text-red-700')}>
                     {validation.message}
                   </p>
                 </div>
@@ -451,27 +555,33 @@ const DataTransformer = () => {
         {/* Diff Tab */}
         {activeTab === 'diff' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Data 1 (Original)</h2>
+            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+              <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Data 1 (Original)</h2>
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                className="w-full h-64 p-4 border-2 border-gray-200 rounded-lg font-mono text-sm focus:outline-none focus:border-blue-400 resize-none"
-                placeholder="Enter first JSON object..."
+                className={`w-full h-64 p-4 border-2 rounded-lg font-mono text-sm focus:outline-none resize-none ${
+                  darkMode
+                    ? 'bg-slate-700 text-white border-slate-600 focus:border-blue-400'
+                    : 'bg-white text-gray-800 border-gray-200 focus:border-blue-400'
+                }`}
               />
             </div>
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Data 2 (Updated)</h2>
+            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+              <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Data 2 (Updated)</h2>
               <textarea
                 value={compareInput}
                 onChange={(e) => setCompareInput(e.target.value)}
-                className="w-full h-64 p-4 border-2 border-gray-200 rounded-lg font-mono text-sm focus:outline-none focus:border-blue-400 resize-none"
-                placeholder="Enter second JSON object..."
+                className={`w-full h-64 p-4 border-2 rounded-lg font-mono text-sm focus:outline-none resize-none ${
+                  darkMode
+                    ? 'bg-slate-700 text-white border-slate-600 focus:border-blue-400'
+                    : 'bg-white text-gray-800 border-gray-200 focus:border-blue-400'
+                }`}
               />
             </div>
-            <div className="lg:col-span-2 bg-white rounded-xl shadow-lg p-6">
+            <div className={`lg:col-span-2 ${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-800">Differences</h2>
+                <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Differences</h2>
                 <button
                   onClick={compareData}
                   className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium"
@@ -481,35 +591,35 @@ const DataTransformer = () => {
               </div>
               <div className="space-y-2 max-h-96 overflow-auto">
                 {diffResult.length === 0 ? (
-                  <div className="text-gray-500 text-center py-8">No differences found or click Compare</div>
+                  <div className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} text-center py-8`}>No differences found or click Compare</div>
                 ) : (
                   diffResult.map((diff, i) => (
                     <div
                       key={i}
                       className={`p-3 rounded-lg border-l-4 font-mono text-sm ${
                         diff.type === 'added'
-                          ? 'bg-green-50 border-green-500 text-green-800'
+                          ? darkMode ? 'bg-green-900 border-green-500 text-green-200' : 'bg-green-50 border-green-500 text-green-800'
                           : diff.type === 'removed'
-                          ? 'bg-red-50 border-red-500 text-red-800'
+                          ? darkMode ? 'bg-red-900 border-red-500 text-red-200' : 'bg-red-50 border-red-500 text-red-800'
                           : diff.type === 'changed'
-                          ? 'bg-yellow-50 border-yellow-500 text-yellow-800'
-                          : 'bg-gray-50 border-gray-500 text-gray-800'
+                          ? darkMode ? 'bg-yellow-900 border-yellow-500 text-yellow-200' : 'bg-yellow-50 border-yellow-500 text-yellow-800'
+                          : darkMode ? 'bg-gray-700 border-gray-500 text-gray-200' : 'bg-gray-50 border-gray-500 text-gray-800'
                       }`}
                     >
                       <div className="font-bold">{diff.path || 'Error'}</div>
                       {diff.type === 'changed' && (
                         <>
-                          <div className="text-red-600 mt-1">- {JSON.stringify(diff.old)}</div>
-                          <div className="text-green-600">+ {JSON.stringify(diff.new)}</div>
+                          <div className={darkMode ? 'text-red-300' : 'text-red-600'} style={{marginTop: '0.25rem'}}>- {JSON.stringify(diff.old)}</div>
+                          <div className={darkMode ? 'text-green-300' : 'text-green-600'}>+ {JSON.stringify(diff.new)}</div>
                         </>
                       )}
                       {diff.type === 'added' && (
-                        <div className="text-green-600 mt-1">+ {JSON.stringify(diff.value)}</div>
+                        <div className={darkMode ? 'text-green-300' : 'text-green-600'} style={{marginTop: '0.25rem'}}>+ {JSON.stringify(diff.value)}</div>
                       )}
                       {diff.type === 'removed' && (
-                        <div className="text-red-600 mt-1">- {JSON.stringify(diff.value)}</div>
+                        <div className={darkMode ? 'text-red-300' : 'text-red-600'} style={{marginTop: '0.25rem'}}>- {JSON.stringify(diff.value)}</div>
                       )}
-                      {diff.message && <div className="text-red-600 mt-1">{diff.message}</div>}
+                      {diff.message && <div className={darkMode ? 'text-red-300' : 'text-red-600'} style={{marginTop: '0.25rem'}}>{diff.message}</div>}
                     </div>
                   ))
                 )}
@@ -521,13 +631,16 @@ const DataTransformer = () => {
         {/* Mock Data Tab */}
         {activeTab === 'mock' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">JSON Schema</h2>
-              <p className="text-xs text-gray-500 mb-3">Define your schema with type, properties, and format</p>
+            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+              <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>JSON Schema</h2>
               <textarea
                 value={schema}
                 onChange={(e) => setSchema(e.target.value)}
-                className="w-full h-96 p-4 border-2 border-gray-200 rounded-lg font-mono text-sm focus:outline-none focus:border-blue-400 resize-none"
+                className={`w-full h-96 p-4 border-2 rounded-lg font-mono text-sm focus:outline-none resize-none ${
+                  darkMode
+                    ? 'bg-slate-700 text-white border-slate-600 focus:border-blue-400'
+                    : 'bg-white text-gray-800 border-gray-200 focus:border-blue-400'
+                }`}
                 placeholder="Enter JSON Schema..."
               />
               <button
@@ -538,29 +651,26 @@ const DataTransformer = () => {
                 Generate Mock Data
               </button>
             </div>
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Generated Mock Data</h2>
+            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+              <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Generated Mock Data</h2>
               <textarea
                 value={output}
                 readOnly
-                className="w-full h-96 p-4 border-2 border-gray-200 rounded-lg font-mono text-sm bg-gray-50 resize-none"
+                className={`w-full h-96 p-4 border-2 rounded-lg font-mono text-sm resize-none ${
+                  darkMode
+                    ? 'bg-slate-700 text-white border-slate-600'
+                    : 'bg-gray-50 text-gray-800 border-gray-200'
+                }`}
                 placeholder="Mock data will appear here..."
               />
-              <div className="flex gap-2 mt-4 flex-wrap">
-                <button
-                  onClick={() => copyToClipboard(output)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
-                >
-                  <Copy size={16} />
-                  Copy
-                </button>
-                <button
-                  onClick={() => downloadFile(output, 'mock-data.json')}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
-                >
-                  <Download size={16} />
-                  Download
-                </button>
+              <div className="mt-4">
+                <ActionButtons 
+                  onCopy={copyToClipboard}
+                  onDownload={downloadFile}
+                  content={output}
+                  filename="mock-data.json"
+                  darkMode={darkMode}
+                />
               </div>
             </div>
           </div>
@@ -569,25 +679,31 @@ const DataTransformer = () => {
         {/* Generate Code Tab */}
         {activeTab === 'generate' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Input JSON</h2>
+            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+              <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Input JSON</h2>
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                className="w-full h-80 p-4 border-2 border-gray-200 rounded-lg font-mono text-sm focus:outline-none focus:border-blue-400 resize-none"
+                className={`w-full h-80 p-4 border-2 rounded-lg font-mono text-sm focus:outline-none resize-none ${
+                  darkMode
+                    ? 'bg-slate-700 text-white border-slate-600 focus:border-blue-400'
+                    : 'bg-white text-gray-800 border-gray-200 focus:border-blue-400'
+                }`}
                 placeholder="Enter JSON to generate interfaces..."
               />
               <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-3">Language</label>
+                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-3`}>Language</label>
                 <div className="flex gap-2 flex-wrap">
-                  {languages.map(lang => (
+                  {LANGUAGES.map(lang => (
                     <button
                       key={lang.id}
                       onClick={() => setCodeLanguage(lang.id)}
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                         codeLanguage === lang.id
                           ? 'bg-blue-500 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          : darkMode
+                            ? 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >
                       {lang.label}
@@ -603,29 +719,26 @@ const DataTransformer = () => {
                 Generate Code
               </button>
             </div>
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Generated Code ({codeLanguage})</h2>
+            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+              <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Generated Code ({codeLanguage})</h2>
               <textarea
                 value={output}
                 readOnly
-                className="w-full h-80 p-4 border-2 border-gray-200 rounded-lg font-mono text-sm bg-gray-50 resize-none"
+                className={`w-full h-80 p-4 border-2 rounded-lg font-mono text-sm resize-none ${
+                  darkMode
+                    ? 'bg-slate-700 text-white border-slate-600'
+                    : 'bg-gray-50 text-gray-800 border-gray-200'
+                }`}
                 placeholder="Code will appear here..."
               />
-              <div className="flex gap-2 mt-4 flex-wrap">
-                <button
-                  onClick={() => copyToClipboard(output)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
-                >
-                  <Copy size={16} />
-                  Copy
-                </button>
-                <button
-                  onClick={() => downloadFile(output, `interfaces.${codeLanguage === 'python' ? 'py' : codeLanguage === 'java' ? 'java' : codeLanguage === 'go' ? 'go' : 'ts'}`)}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
-                >
-                  <Download size={16} />
-                  Download
-                </button>
+              <div className="mt-4">
+                <ActionButtons 
+                  onCopy={copyToClipboard}
+                  onDownload={downloadFile}
+                  content={output}
+                  filename={`interfaces.${codeLanguage === 'python' ? 'py' : codeLanguage === 'java' ? 'java' : codeLanguage === 'go' ? 'go' : 'ts'}`}
+                  darkMode={darkMode}
+                />
               </div>
             </div>
           </div>
@@ -633,14 +746,14 @@ const DataTransformer = () => {
 
         {/* Validation Status Bar */}
         {validation && activeTab !== 'validate' && (
-          <div className="mt-6 bg-white rounded-xl shadow-lg p-4">
+          <div className={`mt-6 ${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4`}>
             <div className="flex items-center gap-3">
               {validation.valid ? (
-                <CheckCircle className="text-green-500 flex-shrink-0" size={20} />
+                <CheckCircle className={`${darkMode ? 'text-green-400' : 'text-green-500'} flex-shrink-0`} size={20} />
               ) : (
-                <AlertCircle className="text-red-500 flex-shrink-0" size={20} />
+                <AlertCircle className={`${darkMode ? 'text-red-400' : 'text-red-500'} flex-shrink-0`} size={20} />
               )}
-              <span className={`font-medium ${validation.valid ? 'text-green-700' : 'text-red-700'}`}>
+              <span className={`font-medium ${validation.valid ? (darkMode ? 'text-green-300' : 'text-green-700') : (darkMode ? 'text-red-300' : 'text-red-700')}`}>
                 {validation.message}
               </span>
             </div>
@@ -650,135 +763,5 @@ const DataTransformer = () => {
     </div>
   );
 };
-const handleFileUpload = (event, setInput, setInputFormat) => {
-  const file = event.target.files[0];
-  if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const content = e.target.result;
-      setInput(content);
-
-      // Detect format from file extension
-      const extension = file.name.split('.').pop().toLowerCase();
-      const formatMap = {
-        'json': 'json',
-        'xml': 'xml',
-        'yaml': 'yaml',
-        'yml': 'yaml',
-        'csv': 'csv'
-      };
-
-      const detectedFormat = formatMap[extension];
-      if (detectedFormat) {
-        setInputFormat(detectedFormat);
-      }
-
-      alert(`✅ File loaded: ${file.name}`);
-    } catch (error) {
-      alert(`❌ Error reading file: ${error.message}`);
-    }
-  };
-
-  reader.onerror = () => {
-    alert('❌ Error reading file');
-  };
-
-  reader.readAsText(file);
-};
-
-// File Download Handler
-const downloadFile = (content, filename) => {
-  if (!content) {
-    alert('❌ No content to download');
-    return;
-  }
-
-  const blob = new Blob([content], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename || 'output.txt';
-  a.click();
-  URL.revokeObjectURL(url);
-};
-
-// JSX Components for File Upload/Download UI
-
-// Upload Button Component
-export const FileUploadButton = ({ onUpload }) => {
-  const fileInputRef = React.useRef(null);
-
-  return (
-    <>
-      <button
-        onClick={() => fileInputRef.current?.click()}
-        className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
-      >
-        <Upload size={16} />
-        Upload File
-      </button>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".json,.xml,.yaml,.yml,.csv"
-        onChange={onUpload}
-        style={{ display: 'none' }}
-      />
-    </>
-  );
-};
-
-// Download Button Component
-export const FileDownloadButton = ({ content, filename = 'output.txt' }) => {
-  return (
-    <button
-      onClick={() => downloadFile(content, filename)}
-      disabled={!content}
-      className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 disabled:bg-gray-400 transition-colors text-sm font-medium"
-    >
-      <Download size={16} />
-      Download
-    </button>
-  );
-};
-
-// Quick Copy Button (Enhanced)
-export const QuickCopyButton = ({ content }) => {
-  const [copied, setCopied] = React.useState(false);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(content);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      alert('Failed to copy');
-    }
-  };
-
-  return (
-    <button
-      onClick={handleCopy}
-      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
-        copied
-          ? 'bg-green-500 text-white'
-          : 'bg-blue-500 text-white hover:bg-blue-600'
-      }`}
-    >
-      {copied ? (
-        <>
-          <Check size={16} />
-          Copied!
-        </>
-      ) : (
-        <>
-          <Copy size={16} />
-          Copy
-        </>
-      )}
-    </button>
-  );
-};
 export default DataTransformer;
