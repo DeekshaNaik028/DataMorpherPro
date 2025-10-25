@@ -39,8 +39,8 @@ const TABS = [
 // Logo Component
 
 const Logo = () => (
-  <div className="relative">
-    <svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <div className="relative w-10 h-10 sm:w-12 sm:h-12">
+    <svg className="w-full h-full" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect width="100" height="100" rx="20" fill="url(#gradient)"/>
       <path d="M30 35h40M30 50h40M30 65h25" stroke="white" strokeWidth="6" strokeLinecap="round"/>
       <circle cx="70" cy="65" r="8" fill="white"/>
@@ -52,7 +52,7 @@ const Logo = () => (
       </defs>
     </svg>
     {/* Version Badge */}
-    <span className="absolute -bottom-2 -right-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-lg">
+    <span className="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-[6px] sm:text-[8px] font-bold px-1 sm:px-1.5 py-0.5 rounded-full shadow-lg">
       v1.0
     </span>
   </div>
@@ -71,7 +71,7 @@ const FileUploadButton = ({ onUpload, darkMode }) => {
       >
         <Upload size={14} className="sm:w-4 sm:h-4" />
         <span className="hidden sm:inline">Upload</span>
-        <span className="sm:hidden">📁</span>
+        
       </button>
       <input
         ref={fileInputRef}
