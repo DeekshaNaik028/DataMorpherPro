@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   FileJson, FileCode, Database, GitCompare, Sparkles,
   Eye, Code2, CheckCircle, AlertCircle, Copy, Download,
-  Wand2, Upload
+  Wand2, Upload, Menu, X
 } from 'lucide-react';
 import { useTheme, ThemeToggle } from './ThemeToggle';
 import { useKeyboardShortcuts, KeyboardShortcutsButton } from './KeyboardShortcuts';
@@ -36,6 +36,29 @@ const TABS = [
   { id: 'generate', label: 'Generate Code', icon: Code2 }
 ];
 
+// Logo Component
+
+const Logo = () => (
+  <div className="relative">
+    <svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" rx="20" fill="url(#gradient)"/>
+      <path d="M30 35h40M30 50h40M30 65h25" stroke="white" strokeWidth="6" strokeLinecap="round"/>
+      <circle cx="70" cy="65" r="8" fill="white"/>
+      <defs>
+        <linearGradient id="gradient" x1="0" y1="0" x2="100" y2="100">
+          <stop offset="0%" stopColor="#3B82F6"/>
+          <stop offset="100%" stopColor="#8B5CF6"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    {/* Version Badge */}
+    <span className="absolute -bottom-2 -right-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-lg">
+      v1.0
+    </span>
+  </div>
+);
+
+
 // File Upload Component
 const FileUploadButton = ({ onUpload, darkMode }) => {
   const fileInputRef = React.useRef(null);
@@ -44,10 +67,11 @@ const FileUploadButton = ({ onUpload, darkMode }) => {
     <>
       <button
         onClick={() => fileInputRef.current?.click()}
-        className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
+        className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-xs sm:text-sm font-medium"
       >
-        <Upload size={16} />
-        Upload File
+        <Upload size={14} className="sm:w-4 sm:h-4" />
+        <span className="hidden sm:inline">Upload</span>
+        <span className="sm:hidden">📁</span>
       </button>
       <input
         ref={fileInputRef}
@@ -65,32 +89,32 @@ const ActionButtons = ({ onCopy, onDownload, content, filename, darkMode }) => (
   <div className="flex gap-2 flex-wrap">
     <button
       onClick={() => onCopy(content)}
-      className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
+      className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-xs sm:text-sm font-medium"
     >
-      <Copy size={16} />
-      Copy
+      <Copy size={14} className="sm:w-4 sm:h-4" />
+      <span className="hidden sm:inline">Copy</span>
     </button>
     <button
       onClick={() => onDownload(content, filename)}
-      className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
+      className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors text-xs sm:text-sm font-medium"
       disabled={!content}
     >
-      <Download size={16} />
-      Download
+      <Download size={14} className="sm:w-4 sm:h-4" />
+      <span className="hidden sm:inline">Download</span>
     </button>
   </div>
 );
 
 // Format Selector Component
 const FormatSelector = ({ formats, activeFormat, onSelect, darkMode }) => (
-  <div className="flex gap-2 flex-wrap">
+  <div className="flex gap-1 sm:gap-2 flex-wrap">
     {formats.map(fmt => {
       const Icon = fmt.icon;
       return (
         <button
           key={fmt.id}
           onClick={() => onSelect(fmt.id)}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1 transition-all ${
+          className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1 transition-all ${
             activeFormat === fmt.id
               ? 'bg-blue-500 text-white'
               : darkMode 
@@ -98,13 +122,58 @@ const FormatSelector = ({ formats, activeFormat, onSelect, darkMode }) => (
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          <Icon size={14} />
-          {fmt.label}
+          <Icon size={12} className="sm:w-3.5 sm:h-3.5" />
+          <span className="hidden sm:inline">{fmt.label}</span>
         </button>
       );
     })}
   </div>
 );
+
+// Mobile Tab Menu
+const MobileTabMenu = ({ tabs, activeTab, setActiveTab, darkMode, isOpen, setIsOpen }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 lg:hidden">
+      <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setIsOpen(false)} />
+      <div className={`absolute right-0 top-0 h-full w-64 ${
+        darkMode ? 'bg-slate-800' : 'bg-white'
+      } shadow-xl p-4 overflow-y-auto`}>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className={`font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Menu</h3>
+          <button onClick={() => setIsOpen(false)} className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
+            <X size={24} />
+          </button>
+        </div>
+        <div className="space-y-2">
+          {tabs.map(tab => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setIsOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
+                  activeTab === tab.id
+                    ? 'bg-blue-500 text-white'
+                    : darkMode
+                      ? 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Icon size={18} />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Main DataTransformer Component
 const DataTransformer = () => {
@@ -164,6 +233,7 @@ const DataTransformer = () => {
     }
   }, null, 2));
   const [codeLanguage, setCodeLanguage] = useState('typescript');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [darkMode, setDarkMode] = useTheme();
   useKeyboardShortcuts(setActiveTab);
@@ -331,35 +401,51 @@ const DataTransformer = () => {
   }, [inputFormat, outputFormat]);
 
   return (
-    <div className={`min-h-screen p-6 transition-colors ${
+    <div className={`min-h-screen p-3 sm:p-4 md:p-6 transition-colors ${
       darkMode 
         ? 'bg-gradient-to-br from-slate-900 to-slate-800' 
         : 'bg-gradient-to-br from-slate-50 to-blue-50'
     }`}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6 mb-6`}>
+        <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6`}>
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <FileJson className="text-white" size={24} />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12">
+                
+                <Logo />
               </div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-purple-400">
-                  Data Transformer Pro
+                
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  Data Morpher Pro
+            
                 </h1>
-                <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Convert, validate, and transform data between formats</p>
+                
+                <p className={`text-xs sm:text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} hidden sm:block`}>
+                  Convert, validate, and transform data
+                </p>
+                
               </div>
+              
             </div>
 
             <div className="flex items-center gap-2">
               <ThemeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
-              <KeyboardShortcutsButton darkMode={darkMode} />
+              <div className="hidden sm:block">
+                <KeyboardShortcutsButton darkMode={darkMode} />
+              </div>
+              <button
+                onClick={() => setMobileMenuOpen(true)}
+                className="lg:hidden p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-700"
+              >
+                <Menu size={20} className={darkMode ? 'text-gray-400' : 'text-gray-600'} />
+              </button>
             </div>
           </div>
 
-          {/* Tabs */}
-          <div className="flex gap-2 overflow-x-auto pb-2">
+          {/* Desktop Tabs */}
+          <div className="hidden lg:flex gap-2 overflow-x-auto pb-2">
             {TABS.map(tab => {
               const Icon = tab.icon;
               return (
@@ -378,14 +464,34 @@ const DataTransformer = () => {
               );
             })}
           </div>
+
+          {/* Mobile Tab Indicator */}
+          <div className="lg:hidden">
+            <div className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-slate-700' : 'bg-gray-100'} flex items-center justify-between`}>
+              <span className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                {TABS.find(t => t.id === activeTab)?.label}
+              </span>
+              <span className="text-xs text-gray-500">Tap menu to switch</span>
+            </div>
+          </div>
         </div>
+
+        {/* Mobile Menu */}
+        <MobileTabMenu 
+          tabs={TABS}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          darkMode={darkMode}
+          isOpen={mobileMenuOpen}
+          setIsOpen={setMobileMenuOpen}
+        />
 
         {/* Convert Tab */}
         {activeTab === 'convert' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Input</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+                <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Input</h2>
                 <FormatSelector 
                   formats={FORMATS} 
                   activeFormat={inputFormat} 
@@ -396,7 +502,7 @@ const DataTransformer = () => {
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                className={`w-full h-96 p-4 border-2 rounded-lg font-mono text-sm focus:outline-none resize-none ${
+                className={`w-full h-64 sm:h-80 md:h-96 p-3 sm:p-4 border-2 rounded-lg font-mono text-xs sm:text-sm focus:outline-none resize-none ${
                   darkMode
                     ? 'bg-slate-700 text-white border-slate-600 focus:border-blue-400'
                     : 'bg-white text-gray-800 border-gray-200 focus:border-blue-400'
@@ -407,22 +513,22 @@ const DataTransformer = () => {
                 <FileUploadButton onUpload={handleFileUpload} darkMode={darkMode} />
                 <button
                   onClick={() => setInput(DataUtils.beautify(input, inputFormat))}
-                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
+                  className="px-3 sm:px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-xs sm:text-sm font-medium"
                 >
                   Beautify
                 </button>
                 <button
                   onClick={() => setInput(DataUtils.minify(input, inputFormat))}
-                  className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium"
+                  className="px-3 sm:px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-xs sm:text-sm font-medium"
                 >
                   Minify
                 </button>
               </div>
             </div>
 
-            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Output</h2>
+            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+                <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Output</h2>
                 <FormatSelector 
                   formats={FORMATS} 
                   activeFormat={outputFormat} 
@@ -433,7 +539,7 @@ const DataTransformer = () => {
               <textarea
                 value={output}
                 readOnly
-                className={`w-full h-96 p-4 border-2 rounded-lg font-mono text-sm resize-none ${
+                className={`w-full h-64 sm:h-80 md:h-96 p-3 sm:p-4 border-2 rounded-lg font-mono text-xs sm:text-sm resize-none ${
                   darkMode
                     ? 'bg-slate-700 text-white border-slate-600'
                     : 'bg-gray-50 text-gray-800 border-gray-200'
@@ -455,9 +561,9 @@ const DataTransformer = () => {
 
         {/* Tree View Tab */}
         {activeTab === 'tree' && (
-          <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
-            <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Data Tree View</h2>
-            <div className={`border-2 rounded-lg p-4 max-h-[600px] overflow-auto ${
+          <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
+            <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Data Tree View</h2>
+            <div className={`border-2 rounded-lg p-3 sm:p-4 max-h-[400px] sm:max-h-[600px] overflow-auto ${
               darkMode
                 ? 'bg-slate-700 border-slate-600'
                 : 'bg-gray-50 border-gray-200'
@@ -467,7 +573,7 @@ const DataTransformer = () => {
                   const data = JSON.parse(input);
                   return <TreeView data={data} darkMode={darkMode} />;
                 } catch (e) {
-                  return <div className={`${darkMode ? 'text-red-400' : 'text-red-500'} font-mono text-sm`}>Invalid JSON: {e.message}</div>;
+                  return <div className={`${darkMode ? 'text-red-400' : 'text-red-500'} font-mono text-xs sm:text-sm`}>Invalid JSON: {e.message}</div>;
                 }
               })()}
             </div>
@@ -476,17 +582,17 @@ const DataTransformer = () => {
 
         {/* Query Tab */}
         {activeTab === 'query' && (
-          <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
-            <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>JSONPath Query Tester</h2>
+          <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
+            <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>JSONPath Query Tester</h2>
             <div className="mb-4">
-              <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>JSONPath Expression</label>
+              <label className={`block text-xs sm:text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>JSONPath Expression</label>
               <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'} mb-3`}>Examples: $.name, $.skills[0], $.address.city, $.users[*].id</p>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className={`flex-1 px-4 py-2 border-2 rounded-lg focus:outline-none ${
+                  className={`flex-1 px-3 sm:px-4 py-2 border-2 rounded-lg focus:outline-none text-sm ${
                     darkMode
                       ? 'bg-slate-700 text-white border-slate-600 focus:border-blue-400'
                       : 'bg-white text-gray-800 border-gray-200 focus:border-blue-400'
@@ -495,19 +601,19 @@ const DataTransformer = () => {
                 />
                 <button
                   onClick={executeQuery}
-                  className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm"
+                  className="px-4 sm:px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm"
                 >
                   Execute
                 </button>
               </div>
             </div>
-            <div className={`border-2 rounded-lg p-4 ${
+            <div className={`border-2 rounded-lg p-3 sm:p-4 ${
               darkMode
                 ? 'bg-slate-700 border-slate-600'
                 : 'bg-gray-50 border-gray-200'
             }`}>
-              <h3 className={`font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-3`}>Result:</h3>
-              <pre className={`p-4 rounded-lg overflow-auto max-h-96 text-sm font-mono border ${
+              <h3 className={`font-medium text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-3`}>Result:</h3>
+              <pre className={`p-3 sm:p-4 rounded-lg overflow-auto max-h-64 sm:max-h-96 text-xs sm:text-sm font-mono border ${
                 darkMode
                   ? 'bg-slate-600 text-white border-slate-500'
                   : 'bg-white text-gray-800 border-gray-200'
@@ -520,30 +626,30 @@ const DataTransformer = () => {
 
         {/* Validate Tab */}
         {activeTab === 'validate' && (
-          <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
-            <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Data Validation</h2>
+          <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
+            <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Data Validation</h2>
             <button
               onClick={validateInput}
-              className="mb-6 px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium"
+              className="mb-6 px-4 sm:px-6 py-2 sm:py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium text-sm sm:text-base w-full sm:w-auto"
             >
               Validate {inputFormat.toUpperCase()}
             </button>
             {validation && (
-              <div className={`flex items-start gap-4 p-4 rounded-lg border-2 ${
+              <div className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg border-2 ${
                 validation.valid
                   ? darkMode ? 'bg-green-900 border-green-700' : 'bg-green-50 border-green-200'
                   : darkMode ? 'bg-red-900 border-red-700' : 'bg-red-50 border-red-200'
               }`}>
                 {validation.valid ? (
-                  <CheckCircle className={`${darkMode ? 'text-green-400' : 'text-green-600'} flex-shrink-0`} size={28} />
+                  <CheckCircle className={`${darkMode ? 'text-green-400' : 'text-green-600'} flex-shrink-0`} size={24} />
                 ) : (
-                  <AlertCircle className={`${darkMode ? 'text-red-400' : 'text-red-600'} flex-shrink-0`} size={28} />
+                  <AlertCircle className={`${darkMode ? 'text-red-400' : 'text-red-600'} flex-shrink-0`} size={24} />
                 )}
-                <div className="flex-1">
-                  <h3 className={`font-bold text-lg ${validation.valid ? (darkMode ? 'text-green-300' : 'text-green-800') : (darkMode ? 'text-red-300' : 'text-red-800')}`}>
+                <div className="flex-1 min-w-0">
+                  <h3 className={`font-bold text-base sm:text-lg ${validation.valid ? (darkMode ? 'text-green-300' : 'text-green-800') : (darkMode ? 'text-red-300' : 'text-red-800')}`}>
                     {validation.valid ? '✓ Valid' : '✗ Invalid'}
                   </h3>
-                  <p className={validation.valid ? (darkMode ? 'text-green-200' : 'text-green-700') : (darkMode ? 'text-red-200' : 'text-red-700')}>
+                  <p className={`text-xs sm:text-sm break-words ${validation.valid ? (darkMode ? 'text-green-200' : 'text-green-700') : (darkMode ? 'text-red-200' : 'text-red-700')}`}>
                     {validation.message}
                   </p>
                 </div>
@@ -554,49 +660,49 @@ const DataTransformer = () => {
 
         {/* Diff Tab */}
         {activeTab === 'diff' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
-              <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Data 1 (Original)</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
+            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
+              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Data 1 (Original)</h2>
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                className={`w-full h-64 p-4 border-2 rounded-lg font-mono text-sm focus:outline-none resize-none ${
+                className={`w-full h-48 sm:h-64 p-3 sm:p-4 border-2 rounded-lg font-mono text-xs sm:text-sm focus:outline-none resize-none ${
                   darkMode
                     ? 'bg-slate-700 text-white border-slate-600 focus:border-blue-400'
                     : 'bg-white text-gray-800 border-gray-200 focus:border-blue-400'
                 }`}
               />
             </div>
-            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
-              <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Data 2 (Updated)</h2>
+            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
+              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Data 2 (Updated)</h2>
               <textarea
                 value={compareInput}
                 onChange={(e) => setCompareInput(e.target.value)}
-                className={`w-full h-64 p-4 border-2 rounded-lg font-mono text-sm focus:outline-none resize-none ${
+                className={`w-full h-48 sm:h-64 p-3 sm:p-4 border-2 rounded-lg font-mono text-xs sm:text-sm focus:outline-none resize-none ${
                   darkMode
                     ? 'bg-slate-700 text-white border-slate-600 focus:border-blue-400'
                     : 'bg-white text-gray-800 border-gray-200 focus:border-blue-400'
                 }`}
               />
             </div>
-            <div className={`lg:col-span-2 ${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Differences</h2>
+            <div className={`lg:col-span-2 ${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+                <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Differences</h2>
                 <button
                   onClick={compareData}
-                  className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium"
+                  className="px-4 sm:px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium text-sm sm:text-base w-full sm:w-auto"
                 >
                   Compare
                 </button>
               </div>
-              <div className="space-y-2 max-h-96 overflow-auto">
+              <div className="space-y-2 max-h-64 sm:max-h-96 overflow-auto">
                 {diffResult.length === 0 ? (
-                  <div className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} text-center py-8`}>No differences found or click Compare</div>
+                  <div className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} text-center py-8 text-sm`}>No differences found or click Compare</div>
                 ) : (
                   diffResult.map((diff, i) => (
                     <div
                       key={i}
-                      className={`p-3 rounded-lg border-l-4 font-mono text-sm ${
+                      className={`p-3 rounded-lg border-l-4 font-mono text-xs sm:text-sm ${
                         diff.type === 'added'
                           ? darkMode ? 'bg-green-900 border-green-500 text-green-200' : 'bg-green-50 border-green-500 text-green-800'
                           : diff.type === 'removed'
@@ -606,20 +712,20 @@ const DataTransformer = () => {
                           : darkMode ? 'bg-gray-700 border-gray-500 text-gray-200' : 'bg-gray-50 border-gray-500 text-gray-800'
                       }`}
                     >
-                      <div className="font-bold">{diff.path || 'Error'}</div>
+                      <div className="font-bold break-words">{diff.path || 'Error'}</div>
                       {diff.type === 'changed' && (
                         <>
-                          <div className={darkMode ? 'text-red-300' : 'text-red-600'} style={{marginTop: '0.25rem'}}>- {JSON.stringify(diff.old)}</div>
-                          <div className={darkMode ? 'text-green-300' : 'text-green-600'}>+ {JSON.stringify(diff.new)}</div>
+                          <div className={`${darkMode ? 'text-red-300' : 'text-red-600'} mt-1 break-words`}>- {JSON.stringify(diff.old)}</div>
+                          <div className={`${darkMode ? 'text-green-300' : 'text-green-600'} break-words`}>+ {JSON.stringify(diff.new)}</div>
                         </>
                       )}
                       {diff.type === 'added' && (
-                        <div className={darkMode ? 'text-green-300' : 'text-green-600'} style={{marginTop: '0.25rem'}}>+ {JSON.stringify(diff.value)}</div>
+                        <div className={`${darkMode ? 'text-green-300' : 'text-green-600'} mt-1 break-words`}>+ {JSON.stringify(diff.value)}</div>
                       )}
                       {diff.type === 'removed' && (
-                        <div className={darkMode ? 'text-red-300' : 'text-red-600'} style={{marginTop: '0.25rem'}}>- {JSON.stringify(diff.value)}</div>
+                        <div className={`${darkMode ? 'text-red-300' : 'text-red-600'} mt-1 break-words`}>- {JSON.stringify(diff.value)}</div>
                       )}
-                      {diff.message && <div className={darkMode ? 'text-red-300' : 'text-red-600'} style={{marginTop: '0.25rem'}}>{diff.message}</div>}
+                      {diff.message && <div className={`${darkMode ? 'text-red-300' : 'text-red-600'} mt-1 break-words`}>{diff.message}</div>}
                     </div>
                   ))
                 )}
@@ -630,13 +736,13 @@ const DataTransformer = () => {
 
         {/* Mock Data Tab */}
         {activeTab === 'mock' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
-              <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>JSON Schema</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
+              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>JSON Schema</h2>
               <textarea
                 value={schema}
                 onChange={(e) => setSchema(e.target.value)}
-                className={`w-full h-96 p-4 border-2 rounded-lg font-mono text-sm focus:outline-none resize-none ${
+                className={`w-full h-64 sm:h-80 md:h-96 p-3 sm:p-4 border-2 rounded-lg font-mono text-xs sm:text-sm focus:outline-none resize-none ${
                   darkMode
                     ? 'bg-slate-700 text-white border-slate-600 focus:border-blue-400'
                     : 'bg-white text-gray-800 border-gray-200 focus:border-blue-400'
@@ -645,18 +751,18 @@ const DataTransformer = () => {
               />
               <button
                 onClick={generateMock}
-                className="mt-4 flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors font-medium w-full justify-center"
+                className="mt-4 flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors font-medium w-full text-sm sm:text-base"
               >
-                <Wand2 size={18} />
+                <Wand2 size={16} className="sm:w-4 sm:h-4" />
                 Generate Mock Data
               </button>
             </div>
-            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
-              <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Generated Mock Data</h2>
+            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
+              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Generated Mock Data</h2>
               <textarea
                 value={output}
                 readOnly
-                className={`w-full h-96 p-4 border-2 rounded-lg font-mono text-sm resize-none ${
+                className={`w-full h-64 sm:h-80 md:h-96 p-3 sm:p-4 border-2 rounded-lg font-mono text-xs sm:text-sm resize-none ${
                   darkMode
                     ? 'bg-slate-700 text-white border-slate-600'
                     : 'bg-gray-50 text-gray-800 border-gray-200'
@@ -678,13 +784,13 @@ const DataTransformer = () => {
 
         {/* Generate Code Tab */}
         {activeTab === 'generate' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
-              <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Input JSON</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
+              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Input JSON</h2>
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                className={`w-full h-80 p-4 border-2 rounded-lg font-mono text-sm focus:outline-none resize-none ${
+                className={`w-full h-48 sm:h-64 md:h-80 p-3 sm:p-4 border-2 rounded-lg font-mono text-xs sm:text-sm focus:outline-none resize-none ${
                   darkMode
                     ? 'bg-slate-700 text-white border-slate-600 focus:border-blue-400'
                     : 'bg-white text-gray-800 border-gray-200 focus:border-blue-400'
@@ -692,13 +798,13 @@ const DataTransformer = () => {
                 placeholder="Enter JSON to generate interfaces..."
               />
               <div className="mt-4">
-                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-3`}>Language</label>
+                <label className={`block text-xs sm:text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-3`}>Language</label>
                 <div className="flex gap-2 flex-wrap">
                   {LANGUAGES.map(lang => (
                     <button
                       key={lang.id}
                       onClick={() => setCodeLanguage(lang.id)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                         codeLanguage === lang.id
                           ? 'bg-blue-500 text-white'
                           : darkMode
@@ -713,18 +819,18 @@ const DataTransformer = () => {
               </div>
               <button
                 onClick={generateInterface}
-                className="mt-4 flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium w-full justify-center"
+                className="mt-4 flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium w-full text-sm sm:text-base"
               >
-                <Code2 size={18} />
+                <Code2 size={16} className="sm:w-4 sm:h-4" />
                 Generate Code
               </button>
             </div>
-            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-6`}>
-              <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Generated Code ({codeLanguage})</h2>
+            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
+              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Generated Code ({codeLanguage})</h2>
               <textarea
                 value={output}
                 readOnly
-                className={`w-full h-80 p-4 border-2 rounded-lg font-mono text-sm resize-none ${
+                className={`w-full h-48 sm:h-64 md:h-80 p-3 sm:p-4 border-2 rounded-lg font-mono text-xs sm:text-sm resize-none ${
                   darkMode
                     ? 'bg-slate-700 text-white border-slate-600'
                     : 'bg-gray-50 text-gray-800 border-gray-200'
@@ -746,14 +852,14 @@ const DataTransformer = () => {
 
         {/* Validation Status Bar */}
         {validation && activeTab !== 'validate' && (
-          <div className={`mt-6 ${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4`}>
+          <div className={`mt-4 sm:mt-6 ${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-3 sm:p-4`}>
             <div className="flex items-center gap-3">
               {validation.valid ? (
-                <CheckCircle className={`${darkMode ? 'text-green-400' : 'text-green-500'} flex-shrink-0`} size={20} />
+                <CheckCircle className={`${darkMode ? 'text-green-400' : 'text-green-500'} flex-shrink-0`} size={18} />
               ) : (
-                <AlertCircle className={`${darkMode ? 'text-red-400' : 'text-red-500'} flex-shrink-0`} size={20} />
+                <AlertCircle className={`${darkMode ? 'text-red-400' : 'text-red-500'} flex-shrink-0`} size={18} />
               )}
-              <span className={`font-medium ${validation.valid ? (darkMode ? 'text-green-300' : 'text-green-700') : (darkMode ? 'text-red-300' : 'text-red-700')}`}>
+              <span className={`font-medium text-xs sm:text-sm break-words ${validation.valid ? (darkMode ? 'text-green-300' : 'text-green-700') : (darkMode ? 'text-red-300' : 'text-red-700')}`}>
                 {validation.message}
               </span>
             </div>
