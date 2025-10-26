@@ -102,7 +102,7 @@ const ActionButtons = ({ onCopy, onDownload, content, filename, darkMode }) => (
 const FormatSelector = ({ formats, activeFormat, onSelect, darkMode, label }) => (
   <div className="w-full">
     {label && (
-      <label className={`block text-sm font-semibold mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+      <label className={`block text-xs sm:text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
         {label}
       </label>
     )}
@@ -113,7 +113,7 @@ const FormatSelector = ({ formats, activeFormat, onSelect, darkMode, label }) =>
           <button
             key={fmt.id}
             onClick={() => onSelect(fmt.id)}
-            className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-semibold transition-all ${
+            className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg text-xs font-semibold transition-all ${
               activeFormat === fmt.id
                 ? 'bg-blue-500 text-white shadow-lg ring-2 ring-blue-300'
                 : darkMode 
@@ -121,7 +121,7 @@ const FormatSelector = ({ formats, activeFormat, onSelect, darkMode, label }) =>
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
             }`}
           >
-            <Icon size={18} />
+            <Icon size={14} className="sm:w-4 sm:h-4" />
             <span>{fmt.label}</span>
           </button>
         );
@@ -129,7 +129,6 @@ const FormatSelector = ({ formats, activeFormat, onSelect, darkMode, label }) =>
     </div>
   </div>
 );
-
 // Mobile Tab Menu
 const MobileTabMenu = ({ tabs, activeTab, setActiveTab, darkMode, isOpen, setIsOpen }) => {
   if (!isOpen) return null;
@@ -489,7 +488,7 @@ const DataTransformer = () => {
             {/* Input Section */}
             <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
               <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>
-                📥 Input
+                Input
               </h2>
               
               <FormatSelector 
@@ -517,13 +516,13 @@ const DataTransformer = () => {
                   onClick={() => setInput(DataUtils.beautify(input, inputFormat))}
                   className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
                 >
-                  ✨ Beautify
+                  Beautify
                 </button>
                 <button
                   onClick={() => setInput(DataUtils.minify(input, inputFormat))}
                   className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium"
                 >
-                  📦 Minify
+                 Minify
                 </button>
               </div>
             </div>
@@ -531,7 +530,7 @@ const DataTransformer = () => {
             {/* Output Section */}
             <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
               <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>
-                📤 Output
+                Output
               </h2>
               
               <FormatSelector 
@@ -569,7 +568,7 @@ const DataTransformer = () => {
         {/* Tree View Tab */}
         {activeTab === 'tree' && (
           <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
-            <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>🌳 Data Tree View</h2>
+            <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}> Data Tree View</h2>
             <div className={`border-2 rounded-lg p-3 sm:p-4 max-h-[400px] sm:max-h-[600px] overflow-auto ${
               darkMode
                 ? 'bg-slate-700 border-slate-600'
@@ -590,7 +589,7 @@ const DataTransformer = () => {
         {/* Query Tab */}
         {activeTab === 'query' && (
           <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
-            <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>🔍 JSONPath Query Tester</h2>
+            <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}> JSONPath Query Tester</h2>
             <div className="mb-4">
               <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>JSONPath Expression</label>
               <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'} mb-3`}>Examples: $.name, $.skills[0], $.address.city, $.users[*].id</p>
@@ -634,7 +633,7 @@ const DataTransformer = () => {
         {/* Validate Tab */}
         {activeTab === 'validate' && (
           <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
-            <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>✅ Data Validation</h2>
+            <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}> Data Validation</h2>
             <button
               onClick={validateInput}
               className="mb-6 px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium w-full sm:w-auto"
@@ -669,7 +668,7 @@ const DataTransformer = () => {
         {activeTab === 'diff' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
             <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
-              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>📄 Data 1 (Original)</h2>
+              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}> Data 1 (Original)</h2>
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -681,7 +680,7 @@ const DataTransformer = () => {
               />
             </div>
             <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
-              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>📝 Data 2 (Updated)</h2>
+              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}> Data 2 (Updated)</h2>
               <textarea
                 value={compareInput}
                 onChange={(e) => setCompareInput(e.target.value)}
@@ -694,7 +693,7 @@ const DataTransformer = () => {
             </div>
             <div className={`lg:col-span-2 ${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
-                <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>🔄 Differences</h2>
+                <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}> Differences</h2>
                 <button
                   onClick={compareData}
                   className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium w-full sm:w-auto"
@@ -745,7 +744,7 @@ const DataTransformer = () => {
         {activeTab === 'mock' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
-              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>📋 JSON Schema</h2>
+              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}> JSON Schema</h2>
               <textarea
                 value={schema}
                 onChange={(e) => setSchema(e.target.value)}
@@ -765,7 +764,7 @@ const DataTransformer = () => {
               </button>
             </div>
             <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
-              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>✨ Generated Mock Data</h2>
+              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}> Generated Mock Data</h2>
               <textarea
                 value={output}
                 readOnly
@@ -793,7 +792,7 @@ const DataTransformer = () => {
         {activeTab === 'generate' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
-              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>📄 Input JSON</h2>
+              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Input JSON</h2>
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
