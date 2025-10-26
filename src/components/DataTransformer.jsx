@@ -510,20 +510,8 @@ const DataTransformer = () => {
                 placeholder="Enter your data here..."
               />
               
-              <div className="flex gap-2 mt-4">
+              <div className="mt-4">
                 <FileUploadButton onUpload={handleFileUpload} darkMode={darkMode} />
-                <button
-                  onClick={() => setInput(DataUtils.beautify(input, inputFormat))}
-                  className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
-                >
-                  Beautify
-                </button>
-                <button
-                  onClick={() => setInput(DataUtils.minify(input, inputFormat))}
-                  className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium"
-                >
-                 Minify
-                </button>
               </div>
             </div>
 
@@ -552,7 +540,21 @@ const DataTransformer = () => {
                 placeholder="Converted output will appear here..."
               />
               
-              <div className="mt-4">
+              <div className="mt-4 space-y-2">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setOutput(DataUtils.beautify(output, outputFormat))}
+                    className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
+                  >
+                    Beautify
+                  </button>
+                  <button
+                    onClick={() => setOutput(DataUtils.minify(output, outputFormat))}
+                    className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium"
+                  >
+                    Minify
+                  </button>
+                </div>
                 <ActionButtons 
                   onCopy={copyToClipboard}
                   onDownload={downloadFile}
