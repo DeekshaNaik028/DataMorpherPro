@@ -106,22 +106,22 @@ const FormatSelector = ({ formats, activeFormat, onSelect, darkMode, label }) =>
         {label}
       </label>
     )}
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+    <div className="grid grid-cols-2 gap-3">
       {formats.map(fmt => {
         const Icon = fmt.icon;
         return (
           <button
             key={fmt.id}
             onClick={() => onSelect(fmt.id)}
-            className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-semibold transition-all ${
+            className={`flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${
               activeFormat === fmt.id
-                ? 'bg-blue-500 text-white shadow-lg ring-2 ring-blue-300'
+                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg scale-105'
                 : darkMode 
-                  ? 'bg-slate-700 text-gray-300 hover:bg-slate-600 border border-slate-600' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+                  ? 'bg-slate-700 text-gray-300 hover:bg-slate-600 border-2 border-slate-600' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-300 shadow-sm'
             }`}
           >
-            <Icon size={18} />
+            <Icon size={20} strokeWidth={2.5} />
             <span>{fmt.label}</span>
           </button>
         );
@@ -129,52 +129,6 @@ const FormatSelector = ({ formats, activeFormat, onSelect, darkMode, label }) =>
     </div>
   </div>
 );
-
-// Mobile Tab Menu
-const MobileTabMenu = ({ tabs, activeTab, setActiveTab, darkMode, isOpen, setIsOpen }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 lg:hidden">
-      <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setIsOpen(false)} />
-      <div className={`absolute right-0 top-0 h-full w-72 ${
-        darkMode ? 'bg-slate-800' : 'bg-white'
-      } shadow-2xl p-6 overflow-y-auto`}>
-        <div className="flex justify-between items-center mb-6">
-          <h3 className={`font-bold text-lg ${darkMode ? 'text-white' : 'text-gray-800'}`}>Menu</h3>
-          <button onClick={() => setIsOpen(false)} className={`p-2 rounded-lg ${darkMode ? 'text-gray-400 hover:bg-slate-700' : 'text-gray-600 hover:bg-gray-100'}`}>
-            <X size={24} />
-          </button>
-        </div>
-        <div className="space-y-2">
-          {tabs.map(tab => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  setActiveTab(tab.id);
-                  setIsOpen(false);
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
-                  activeTab === tab.id
-                    ? 'bg-blue-500 text-white shadow-md'
-                    : darkMode
-                      ? 'bg-slate-700 text-gray-300 hover:bg-slate-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                <Icon size={20} />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // Main DataTransformer Component
 const DataTransformer = () => {
   const [input, setInput] = useState(JSON.stringify({
@@ -412,17 +366,17 @@ const DataTransformer = () => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2 sm:gap-3">
               <Logo />
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <div className="flex flex-col">
+                <div className="flex items-baseline gap-2">
+                  <h1 className="text-lg sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent leading-tight">
                     Data Morpher Pro
                   </h1>
-                  <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full shadow-md">
+                  <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-md shadow-md whitespace-nowrap">
                     v1.0
                   </span>
                 </div>
-                <p className={`text-xs sm:text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} hidden sm:block mt-1`}>
-                  Convert, validate, and morph data effortlessly
+                <p className={`text-[10px] sm:text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mt-0.5`}>
+                  Convert, validate, and morph data
                 </p>
               </div>
             </div>
@@ -517,13 +471,13 @@ const DataTransformer = () => {
                   onClick={() => setInput(DataUtils.beautify(input, inputFormat))}
                   className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
                 >
-                   Beautify
+                  Beautify
                 </button>
                 <button
                   onClick={() => setInput(DataUtils.minify(input, inputFormat))}
                   className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium"
                 >
-                   Minify
+                  Minify
                 </button>
               </div>
             </div>
@@ -569,7 +523,7 @@ const DataTransformer = () => {
         {/* Tree View Tab */}
         {activeTab === 'tree' && (
           <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
-            <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}> Data Tree View</h2>
+            <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Data Tree View</h2>
             <div className={`border-2 rounded-lg p-3 sm:p-4 max-h-[400px] sm:max-h-[600px] overflow-auto ${
               darkMode
                 ? 'bg-slate-700 border-slate-600'
@@ -694,7 +648,7 @@ const DataTransformer = () => {
             </div>
             <div className={`lg:col-span-2 ${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
-                <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}> Differences</h2>
+                <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Differences</h2>
                 <button
                   onClick={compareData}
                   className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium w-full sm:w-auto"
