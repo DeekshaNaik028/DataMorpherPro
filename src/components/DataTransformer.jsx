@@ -97,8 +97,6 @@ const ActionButtons = ({ onCopy, onDownload, content, filename, darkMode }) => (
     </button>
   </div>
 );
-
-// Format Selector Component - Mobile Friendly
 const FormatSelector = ({ formats, activeFormat, onSelect, darkMode, label }) => (
   <div className="w-full">
     {label && (
