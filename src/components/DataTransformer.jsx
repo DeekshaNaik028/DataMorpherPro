@@ -408,34 +408,34 @@ const DataTransformer = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6`}>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-4 gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 overflow-hidden">
               <Logo />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <h1 className="text-lg sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent whitespace-nowrap">
+              <div className="flex-1 min-w-0 overflow-hidden">
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <h1 className="text-base sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent truncate">
                     Data Morpher Pro
                   </h1>
-                  <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-[9px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 rounded-full shadow-md whitespace-nowrap flex-shrink-0">
+                  <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-[8px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 rounded-full shadow-md whitespace-nowrap flex-shrink-0">
                     v1.0
                   </span>
                 </div>
-                <p className={`text-xs sm:text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} hidden sm:block mt-1`}>
+                <p className={`text-xs sm:text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} hidden sm:block mt-1 truncate`}>
                   Convert, validate, and morph data effortlessly
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 ml-2">
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               <ThemeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
               <div className="hidden sm:block">
                 <KeyboardShortcutsButton darkMode={darkMode} />
               </div>
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className={`lg:hidden p-2 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}
+                className={`lg:hidden p-1.5 sm:p-2 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}
               >
-                <Menu size={20} className={darkMode ? 'text-gray-400' : 'text-gray-600'} />
+                <Menu size={18} className={`sm:w-5 sm:h-5 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`} />
               </button>
             </div>
           </div>
