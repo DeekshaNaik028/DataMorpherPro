@@ -38,7 +38,7 @@ const TABS = [
 
 // Logo Component
 const Logo = () => (
-  <div className="w-10 h-10 sm:w-12 sm:h-12">
+  <div className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
     <svg className="w-full h-full" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect width="100" height="100" rx="20" fill="url(#gradient)"/>
       <path d="M30 35h40M30 50h40M30 65h25" stroke="white" strokeWidth="6" strokeLinecap="round"/>
@@ -97,6 +97,7 @@ const ActionButtons = ({ onCopy, onDownload, content, filename, darkMode }) => (
     </button>
   </div>
 );
+
 const FormatSelector = ({ formats, activeFormat, onSelect, darkMode, label }) => (
   <div className="w-full">
     {label && (
@@ -127,6 +128,7 @@ const FormatSelector = ({ formats, activeFormat, onSelect, darkMode, label }) =>
     </div>
   </div>
 );
+
 // Mobile Tab Menu
 const MobileTabMenu = ({ tabs, activeTab, setActiveTab, darkMode, isOpen, setIsOpen }) => {
   if (!isOpen) return null;
@@ -407,14 +409,14 @@ const DataTransformer = () => {
         {/* Header */}
         <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6`}>
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
               <Logo />
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <h1 className="text-lg sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent whitespace-nowrap">
                     Data Morpher Pro
                   </h1>
-                  <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full shadow-md">
+                  <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-[9px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 rounded-full shadow-md whitespace-nowrap flex-shrink-0">
                     v1.0
                   </span>
                 </div>
@@ -424,7 +426,7 @@ const DataTransformer = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 ml-2">
               <ThemeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
               <div className="hidden sm:block">
                 <KeyboardShortcutsButton darkMode={darkMode} />
