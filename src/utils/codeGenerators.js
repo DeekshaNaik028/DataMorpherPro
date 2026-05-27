@@ -1,3 +1,18 @@
+// Quote a TS property name only when it contains non-identifier characters
+const tsKey = (key) =>
+  /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key)
+    ? key
+    : `"${key.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+
+// Coerce any string into a valid identifier (Java, Python, Go)
+const toIdentifier = (key) => {
+  const s = key.replace(/[^a-zA-Z0-9_]/g, '_');
+  return /^\d/.test(s) ? `_${s}` : s || '_';
+};
+
+// Escape a JSON key for safe use inside Go struct tag double-quotes
+const escapeGoTag = (key) => key.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+
 export const CodeGenerators = {
   generateTypeScript(obj, name = 'Root', visited = new Set()) {
     if (!obj) return 'any';
@@ -47,7 +62,7 @@ export const CodeGenerators = {
           } else {
             type = this.getTypeFromValue(value);
           }
-          return `  ${key}: ${type};`;
+          return `  ${tsKey(key)}: ${type};`;
         })
         .join('\n');
       
@@ -90,7 +105,7 @@ export const CodeGenerators = {
       const props = Object.entries(obj)
         .map(([key, value]) => {
           const type = getType(value);
-          return `    ${key}: ${type}`;
+          return `    ${toIdentifier(key)}: ${type}`;
         })
         .join('\n');
       
@@ -121,23 +136,25 @@ export const CodeGenerators = {
       const fields = Object.entries(obj)
         .map(([key, value]) => {
           const type = getType(value);
-          return `  private ${type} ${key};`;
+          return `  private ${type} ${toIdentifier(key)};`;
         })
         .join('\n');
-      
+
       const getters = Object.entries(obj)
         .map(([key, value]) => {
           const type = getType(value);
-          const capitalKey = key.charAt(0).toUpperCase() + key.slice(1);
-          return `  public ${type} get${capitalKey}() { return ${key}; }`;
+          const id = toIdentifier(key);
+          const capitalKey = id.charAt(0).toUpperCase() + id.slice(1);
+          return `  public ${type} get${capitalKey}() { return ${id}; }`;
         })
         .join('\n');
-      
+
       const setters = Object.entries(obj)
         .map(([key, value]) => {
           const type = getType(value);
-          const capitalKey = key.charAt(0).toUpperCase() + key.slice(1);
-          return `  public void set${capitalKey}(${type} ${key}) { this.${key} = ${key}; }`;
+          const id = toIdentifier(key);
+          const capitalKey = id.charAt(0).toUpperCase() + id.slice(1);
+          return `  public void set${capitalKey}(${type} ${id}) { this.${id} = ${id}; }`;
         })
         .join('\n');
       
@@ -168,8 +185,9 @@ export const CodeGenerators = {
       const fields = Object.entries(obj)
         .map(([key, value]) => {
           const type = getType(value);
-          const fieldName = key.charAt(0).toUpperCase() + key.slice(1);
-          return `  ${fieldName} ${type} \`json:"${key}"\``;
+          const id = toIdentifier(key);
+          const fieldName = id.charAt(0).toUpperCase() + id.slice(1);
+          return `  ${fieldName} ${type} \`json:"${escapeGoTag(key)}"\``;
         })
         .join('\n');
       

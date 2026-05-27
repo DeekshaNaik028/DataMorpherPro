@@ -18,13 +18,13 @@ const TreeView = ({ data, level = 0, darkMode }) => {
     return (
       <div key={fullPath} className="select-none">
         <div className={`flex items-center gap-1 sm:gap-2 py-1 px-2 rounded transition-colors cursor-pointer text-xs sm:text-sm ${
-          darkMode ? 'hover:bg-slate-600' : 'hover:bg-gray-100'
+          darkMode ? 'hover:bg-[#21262d]' : 'hover:bg-gray-100'
         }`}>
           {hasChildren && (
             <button
               onClick={() => toggle(fullPath)}
               className={`p-0.5 rounded flex-shrink-0 ${
-                darkMode ? 'hover:bg-slate-500' : 'hover:bg-gray-200'
+                darkMode ? 'hover:bg-[#30363d]' : 'hover:bg-gray-200'
               }`}
             >
               {isExpanded ? (
@@ -59,7 +59,7 @@ const TreeView = ({ data, level = 0, darkMode }) => {
         
         {isExpanded && hasChildren && (
           <div className={`ml-3 sm:ml-4 border-l-2 pl-2 ${
-            darkMode ? 'border-slate-600' : 'border-gray-300'
+            darkMode ? 'border-[#30363d]' : 'border-gray-200'
           }`}>
             {Object.entries(value).map(([k, v]) => (
               renderValue(k, v, fullPath)

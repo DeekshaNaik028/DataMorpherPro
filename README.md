@@ -137,7 +137,7 @@ npm run lint
 | `Ctrl+Q` | Query Tab |
 | `Ctrl+D` | Diff Tab |
 | `Ctrl+M` | Mock Data Tab |
-| `Ctrl+V` | Validate Tab |
+| `Ctrl+B` | Validate Tab |
 | `Ctrl+E` | Tree View Tab |
 | `Ctrl+G` | Generate Code Tab |
 

@@ -38,17 +38,11 @@ const TABS = [
 
 // Logo Component
 const Logo = () => (
-  <div className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
-    <svg className="w-full h-full" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="100" height="100" rx="20" fill="url(#gradient)"/>
-      <path d="M30 35h40M30 50h40M30 65h25" stroke="white" strokeWidth="6" strokeLinecap="round"/>
-      <circle cx="70" cy="65" r="8" fill="white"/>
-      <defs>
-        <linearGradient id="gradient" x1="0" y1="0" x2="100" y2="100">
-          <stop offset="0%" stopColor="#3B82F6"/>
-          <stop offset="100%" stopColor="#8B5CF6"/>
-        </linearGradient>
-      </defs>
+  <div className="w-10 h-10 sm:w-11 sm:h-11 flex-shrink-0">
+    <svg className="w-full h-full" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="40" height="40" rx="8" fill="#f59e0b"/>
+      <path d="M8 14h14M22 14l-4-4M22 14l-4 4" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M32 26H18M18 26l4-4M18 26l4 4" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   </div>
 );
@@ -101,7 +95,7 @@ const ActionButtons = ({ onCopy, onDownload, content, filename, darkMode }) => (
 const FormatSelector = ({ formats, activeFormat, onSelect, darkMode, label }) => (
   <div className="w-full">
     {label && (
-      <label className={`block text-xs sm:text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+      <label className={`block text-xs sm:text-sm font-semibold mb-2 ${darkMode ? 'text-[#7d8590]' : 'text-gray-600'}`}>
         {label}
       </label>
     )}
@@ -114,10 +108,10 @@ const FormatSelector = ({ formats, activeFormat, onSelect, darkMode, label }) =>
             onClick={() => onSelect(fmt.id)}
             className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg text-xs font-semibold transition-all ${
               activeFormat === fmt.id
-                ? 'bg-blue-500 text-white shadow-lg ring-2 ring-blue-300'
-                : darkMode 
-                  ? 'bg-slate-700 text-gray-300 hover:bg-slate-600 border border-slate-600' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+                ? 'bg-amber-400 text-gray-900 ring-1 ring-amber-300'
+                : darkMode
+                  ? 'bg-[#21262d] text-[#7d8590] hover:text-[#e6edf3] border border-[#30363d]'
+                  : 'bg-gray-100 text-gray-600 hover:text-gray-900 border border-gray-200'
             }`}
           >
             <Icon size={14} className="sm:w-4 sm:h-4" />
@@ -137,15 +131,15 @@ const MobileTabMenu = ({ tabs, activeTab, setActiveTab, darkMode, isOpen, setIsO
     <div className="fixed inset-0 z-50 lg:hidden">
       <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setIsOpen(false)} />
       <div className={`absolute right-0 top-0 h-full w-72 ${
-        darkMode ? 'bg-slate-800' : 'bg-white'
-      } shadow-2xl p-6 overflow-y-auto`}>
+        darkMode ? 'bg-[#161b22] border-l border-[#30363d]' : 'bg-white border-l border-gray-200'
+      } p-6 overflow-y-auto`}>
         <div className="flex justify-between items-center mb-6">
-          <h3 className={`font-bold text-lg ${darkMode ? 'text-white' : 'text-gray-800'}`}>Menu</h3>
-          <button onClick={() => setIsOpen(false)} className={`p-2 rounded-lg ${darkMode ? 'text-gray-400 hover:bg-slate-700' : 'text-gray-600 hover:bg-gray-100'}`}>
-            <X size={24} />
+          <h3 className={`font-mono font-semibold text-sm tracking-wide uppercase ${darkMode ? 'text-[#7d8590]' : 'text-gray-500'}`}>Navigation</h3>
+          <button onClick={() => setIsOpen(false)} className={`p-1.5 rounded-md ${darkMode ? 'text-[#7d8590] hover:bg-[#21262d] hover:text-[#e6edf3]' : 'text-gray-500 hover:bg-gray-100'}`}>
+            <X size={18} />
           </button>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-1">
           {tabs.map(tab => {
             const Icon = tab.icon;
             return (
@@ -155,15 +149,17 @@ const MobileTabMenu = ({ tabs, activeTab, setActiveTab, darkMode, isOpen, setIsO
                   setActiveTab(tab.id);
                   setIsOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all ${
                   activeTab === tab.id
-                    ? 'bg-blue-500 text-white shadow-md'
+                    ? darkMode
+                      ? 'bg-amber-400/10 text-amber-400'
+                      : 'bg-amber-50 text-amber-700'
                     : darkMode
-                      ? 'bg-slate-700 text-gray-300 hover:bg-slate-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'text-[#7d8590] hover:bg-[#21262d] hover:text-[#e6edf3]'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                 }`}
               >
-                <Icon size={20} />
+                <Icon size={16} />
                 {tab.label}
               </button>
             );
@@ -349,6 +345,13 @@ const DataTransformer = () => {
     const file = event.target.files[0];
     if (!file) return;
 
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_FILE_SIZE) {
+      setValidation({ valid: false, message: `File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum supported size is 10MB to avoid browser slowdowns.` });
+      event.target.value = '';
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
@@ -401,26 +404,26 @@ const DataTransformer = () => {
 
   return (
     <div className={`min-h-screen p-3 sm:p-4 md:p-6 transition-colors ${
-      darkMode 
-        ? 'bg-gradient-to-br from-slate-900 to-slate-800' 
-        : 'bg-gradient-to-br from-slate-50 to-blue-50'
+      darkMode
+        ? 'bg-[#0d1117]'
+        : 'bg-[#f6f8fa]'
     }`}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6`}>
+        <div className={`${darkMode ? 'bg-[#161b22] border border-[#30363d]' : 'bg-white border border-gray-200'} rounded-xl p-4 sm:p-6 mb-4 sm:mb-6`}>
           <div className="flex items-center justify-between mb-4 gap-2">
             <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 overflow-hidden">
               <Logo />
               <div className="flex-1 min-w-0 overflow-hidden">
                 <div className="flex items-center gap-1 sm:gap-2">
-                  <h1 className="text-base sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent truncate">
+                  <h1 className={`text-base sm:text-2xl md:text-3xl font-mono font-bold truncate ${darkMode ? 'text-[#e6edf3]' : 'text-gray-900'}`}>
                     Data Morpher Pro
                   </h1>
-                  <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-[8px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 rounded-full shadow-md whitespace-nowrap flex-shrink-0">
+                  <span className={`text-[9px] sm:text-xs font-mono px-1.5 py-0.5 rounded border whitespace-nowrap flex-shrink-0 ${darkMode ? 'border-[#30363d] text-[#7d8590] bg-[#21262d]' : 'border-gray-300 text-gray-400 bg-gray-100'}`}>
                     v1.0
                   </span>
                 </div>
-                <p className={`text-xs sm:text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} hidden sm:block mt-1 truncate`}>
+                <p className={`text-xs sm:text-sm ${darkMode ? 'text-[#7d8590]' : 'text-gray-500'} hidden sm:block mt-1 truncate`}>
                   Convert, validate, and morph data effortlessly
                 </p>
               </div>
@@ -433,7 +436,7 @@ const DataTransformer = () => {
               </div>
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className={`lg:hidden p-1.5 sm:p-2 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}
+                className={`lg:hidden p-1.5 sm:p-2 rounded-lg transition-colors ${darkMode ? 'hover:bg-[#21262d]' : 'hover:bg-gray-200'}`}
               >
                 <Menu size={18} className={`sm:w-5 sm:h-5 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`} />
               </button>
@@ -441,20 +444,22 @@ const DataTransformer = () => {
           </div>
 
           {/* Desktop Tabs */}
-          <div className="hidden lg:flex gap-2 overflow-x-auto pb-2">
+          <div className={`hidden lg:flex overflow-x-auto mt-4 border-b ${darkMode ? 'border-[#30363d]' : 'border-gray-200'}`}>
             {TABS.map(tab => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all whitespace-nowrap border-b-2 -mb-px ${
                     activeTab === tab.id
-                      ? 'bg-blue-500 text-white shadow-md'
-                      : `${darkMode ? 'bg-slate-700 text-gray-300' : 'bg-gray-100 text-gray-700'} hover:${darkMode ? 'bg-slate-600' : 'bg-gray-200'}`
+                      ? 'border-amber-400 text-amber-400'
+                      : darkMode
+                        ? 'border-transparent text-[#7d8590] hover:text-[#e6edf3]'
+                        : 'border-transparent text-gray-500 hover:text-gray-800'
                   }`}
                 >
-                  <Icon size={18} />
+                  <Icon size={15} />
                   {tab.label}
                 </button>
               );
@@ -462,12 +467,12 @@ const DataTransformer = () => {
           </div>
 
           {/* Mobile Tab Indicator */}
-          <div className="lg:hidden">
-            <div className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-slate-700' : 'bg-gray-100'} flex items-center justify-between`}>
-              <span className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+          <div className="lg:hidden mt-3">
+            <div className={`px-3 py-2 rounded-md border ${darkMode ? 'bg-[#21262d] border-[#30363d]' : 'bg-gray-100 border-gray-200'} flex items-center justify-between`}>
+              <span className={`text-sm font-mono font-medium ${darkMode ? 'text-amber-400' : 'text-amber-700'}`}>
                 {TABS.find(t => t.id === activeTab)?.label}
               </span>
-              <span className="text-xs text-gray-500">Tap menu to switch</span>
+              <span className={`text-xs ${darkMode ? 'text-[#7d8590]' : 'text-gray-400'}`}>tap menu to switch</span>
             </div>
           </div>
         </div>
@@ -486,8 +491,8 @@ const DataTransformer = () => {
         {activeTab === 'convert' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Input Section */}
-            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
-              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>
+            <div className={`${darkMode ? 'bg-[#161b22] border border-[#30363d]' : 'bg-white border border-gray-200'} rounded-xl p-4 sm:p-6`}>
+              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-[#e6edf3]' : 'text-gray-900'} mb-4`}>
                 Input
               </h2>
               
@@ -504,7 +509,7 @@ const DataTransformer = () => {
                 onChange={(e) => setInput(e.target.value)}
                 className={`w-full h-64 sm:h-80 md:h-96 p-3 sm:p-4 border-2 rounded-lg font-mono text-xs sm:text-sm focus:outline-none resize-none mt-4 ${
                   darkMode
-                    ? 'bg-slate-700 text-white border-slate-600 focus:border-blue-400'
+                    ? 'bg-[#0d1117] text-[#e6edf3] border-[#30363d] focus:border-amber-400/60'
                     : 'bg-white text-gray-800 border-gray-200 focus:border-blue-400'
                 }`}
                 placeholder="Enter your data here..."
@@ -516,8 +521,8 @@ const DataTransformer = () => {
             </div>
 
             {/* Output Section */}
-            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
-              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>
+            <div className={`${darkMode ? 'bg-[#161b22] border border-[#30363d]' : 'bg-white border border-gray-200'} rounded-xl p-4 sm:p-6`}>
+              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-[#e6edf3]' : 'text-gray-900'} mb-4`}>
                 Output
               </h2>
               
@@ -534,7 +539,7 @@ const DataTransformer = () => {
                 readOnly
                 className={`w-full h-64 sm:h-80 md:h-96 p-3 sm:p-4 border-2 rounded-lg font-mono text-xs sm:text-sm resize-none mt-4 ${
                   darkMode
-                    ? 'bg-slate-700 text-white border-slate-600'
+                    ? 'bg-[#0d1117] text-[#e6edf3] border-[#30363d]'
                     : 'bg-gray-50 text-gray-800 border-gray-200'
                 }`}
                 placeholder="Converted output will appear here..."
@@ -569,11 +574,11 @@ const DataTransformer = () => {
 
         {/* Tree View Tab */}
         {activeTab === 'tree' && (
-          <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
-            <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}> Data Tree View</h2>
+          <div className={`${darkMode ? 'bg-[#161b22] border border-[#30363d]' : 'bg-white border border-gray-200'} rounded-xl p-4 sm:p-6`}>
+            <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-[#e6edf3]' : 'text-gray-900'} mb-4`}>Data Tree View</h2>
             <div className={`border-2 rounded-lg p-3 sm:p-4 max-h-[400px] sm:max-h-[600px] overflow-auto ${
               darkMode
-                ? 'bg-slate-700 border-slate-600'
+                ? 'bg-[#0d1117] border-[#30363d]'
                 : 'bg-gray-50 border-gray-200'
             }`}>
               {(() => {
@@ -590,10 +595,10 @@ const DataTransformer = () => {
 
         {/* Query Tab */}
         {activeTab === 'query' && (
-          <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
-            <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}> JSONPath Query Tester</h2>
+          <div className={`${darkMode ? 'bg-[#161b22] border border-[#30363d]' : 'bg-white border border-gray-200'} rounded-xl p-4 sm:p-6`}>
+            <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-[#e6edf3]' : 'text-gray-900'} mb-4`}>JSONPath Query</h2>
             <div className="mb-4">
-              <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>JSONPath Expression</label>
+              <label className={`block text-sm font-medium ${darkMode ? 'text-[#7d8590]' : 'text-gray-600'} mb-2`}>JSONPath Expression</label>
               <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'} mb-3`}>Examples: $.name, $.skills[0], $.address.city, $.users[*].id</p>
               <div className="flex flex-col sm:flex-row gap-2">
                 <input
@@ -602,7 +607,7 @@ const DataTransformer = () => {
                   onChange={(e) => setQuery(e.target.value)}
                   className={`flex-1 px-4 py-2 border-2 rounded-lg focus:outline-none text-sm ${
                     darkMode
-                      ? 'bg-slate-700 text-white border-slate-600 focus:border-blue-400'
+                      ? 'bg-[#0d1117] text-[#e6edf3] border-[#30363d] focus:border-amber-400/60'
                       : 'bg-white text-gray-800 border-gray-200 focus:border-blue-400'
                   }`}
                   placeholder="$.users[0].name"
@@ -617,13 +622,13 @@ const DataTransformer = () => {
             </div>
             <div className={`border-2 rounded-lg p-4 ${
               darkMode
-                ? 'bg-slate-700 border-slate-600'
+                ? 'bg-[#0d1117] border-[#30363d]'
                 : 'bg-gray-50 border-gray-200'
             }`}>
-              <h3 className={`font-medium text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-3`}>Result:</h3>
+              <h3 className={`font-medium text-sm ${darkMode ? 'text-[#7d8590]' : 'text-gray-600'} mb-3`}>Result:</h3>
               <pre className={`p-4 rounded-lg overflow-auto max-h-64 sm:max-h-96 text-xs sm:text-sm font-mono border ${
                 darkMode
-                  ? 'bg-slate-600 text-white border-slate-500'
+                  ? 'bg-[#161b22] text-[#e6edf3] border-[#30363d]'
                   : 'bg-white text-gray-800 border-gray-200'
               }`}>
                 {queryResult || 'No result yet...'}
@@ -634,8 +639,8 @@ const DataTransformer = () => {
 
         {/* Validate Tab */}
         {activeTab === 'validate' && (
-          <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
-            <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}> Data Validation</h2>
+          <div className={`${darkMode ? 'bg-[#161b22] border border-[#30363d]' : 'bg-white border border-gray-200'} rounded-xl p-4 sm:p-6`}>
+            <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-[#e6edf3]' : 'text-gray-900'} mb-4`}>Data Validation</h2>
             <button
               onClick={validateInput}
               className="mb-6 px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium w-full sm:w-auto"
@@ -669,33 +674,33 @@ const DataTransformer = () => {
         {/* Diff Tab */}
         {activeTab === 'diff' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
-            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
-              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}> Data 1 (Original)</h2>
+            <div className={`${darkMode ? 'bg-[#161b22] border border-[#30363d]' : 'bg-white border border-gray-200'} rounded-xl p-4 sm:p-6`}>
+              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-[#e6edf3]' : 'text-gray-900'} mb-4`}>Original</h2>
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 className={`w-full h-48 sm:h-64 p-4 border-2 rounded-lg font-mono text-xs sm:text-sm focus:outline-none resize-none ${
                   darkMode
-                    ? 'bg-slate-700 text-white border-slate-600 focus:border-blue-400'
+                    ? 'bg-[#0d1117] text-[#e6edf3] border-[#30363d] focus:border-amber-400/60'
                     : 'bg-white text-gray-800 border-gray-200 focus:border-blue-400'
                 }`}
               />
             </div>
-            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
-              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}> Data 2 (Updated)</h2>
+            <div className={`${darkMode ? 'bg-[#161b22] border border-[#30363d]' : 'bg-white border border-gray-200'} rounded-xl p-4 sm:p-6`}>
+              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-[#e6edf3]' : 'text-gray-900'} mb-4`}>Updated</h2>
               <textarea
                 value={compareInput}
                 onChange={(e) => setCompareInput(e.target.value)}
                 className={`w-full h-48 sm:h-64 p-4 border-2 rounded-lg font-mono text-xs sm:text-sm focus:outline-none resize-none ${
                   darkMode
-                    ? 'bg-slate-700 text-white border-slate-600 focus:border-blue-400'
+                    ? 'bg-[#0d1117] text-[#e6edf3] border-[#30363d] focus:border-amber-400/60'
                     : 'bg-white text-gray-800 border-gray-200 focus:border-blue-400'
                 }`}
               />
             </div>
-            <div className={`lg:col-span-2 ${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
+            <div className={`lg:col-span-2 ${darkMode ? 'bg-[#161b22] border border-[#30363d]' : 'bg-white border border-gray-200'} rounded-xl p-4 sm:p-6`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
-                <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}> Differences</h2>
+                <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-[#e6edf3]' : 'text-gray-900'}`}>Differences</h2>
                 <button
                   onClick={compareData}
                   className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium w-full sm:w-auto"
@@ -745,34 +750,34 @@ const DataTransformer = () => {
         {/* Mock Data Tab */}
         {activeTab === 'mock' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
-              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}> JSON Schema</h2>
+            <div className={`${darkMode ? 'bg-[#161b22] border border-[#30363d]' : 'bg-white border border-gray-200'} rounded-xl p-4 sm:p-6`}>
+              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-[#e6edf3]' : 'text-gray-900'} mb-4`}>JSON Schema</h2>
               <textarea
                 value={schema}
                 onChange={(e) => setSchema(e.target.value)}
                 className={`w-full h-64 sm:h-80 md:h-96 p-4 border-2 rounded-lg font-mono text-xs sm:text-sm focus:outline-none resize-none ${
                   darkMode
-                    ? 'bg-slate-700 text-white border-slate-600 focus:border-blue-400'
+                    ? 'bg-[#0d1117] text-[#e6edf3] border-[#30363d] focus:border-amber-400/60'
                     : 'bg-white text-gray-800 border-gray-200 focus:border-blue-400'
                 }`}
                 placeholder="Enter JSON Schema..."
               />
               <button
                 onClick={generateMock}
-                className="mt-4 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors font-medium w-full"
+                className="mt-4 flex items-center justify-center gap-2 px-6 py-3 bg-amber-400 text-gray-900 rounded-lg hover:bg-amber-300 transition-colors font-medium w-full"
               >
                 <Wand2 size={18} />
                 Generate Mock Data
               </button>
             </div>
-            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
-              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}> Generated Mock Data</h2>
+            <div className={`${darkMode ? 'bg-[#161b22] border border-[#30363d]' : 'bg-white border border-gray-200'} rounded-xl p-4 sm:p-6`}>
+              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-[#e6edf3]' : 'text-gray-900'} mb-4`}>Generated Mock Data</h2>
               <textarea
                 value={output}
                 readOnly
                 className={`w-full h-64 sm:h-80 md:h-96 p-4 border-2 rounded-lg font-mono text-xs sm:text-sm resize-none ${
                   darkMode
-                    ? 'bg-slate-700 text-white border-slate-600'
+                    ? 'bg-[#0d1117] text-[#e6edf3] border-[#30363d]'
                     : 'bg-gray-50 text-gray-800 border-gray-200'
                 }`}
                 placeholder="Mock data will appear here..."
@@ -793,20 +798,20 @@ const DataTransformer = () => {
         {/* Generate Code Tab */}
         {activeTab === 'generate' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
-              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Input JSON</h2>
+            <div className={`${darkMode ? 'bg-[#161b22] border border-[#30363d]' : 'bg-white border border-gray-200'} rounded-xl p-4 sm:p-6`}>
+              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-[#e6edf3]' : 'text-gray-900'} mb-4`}>Input JSON</h2>
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 className={`w-full h-48 sm:h-64 md:h-80 p-4 border-2 rounded-lg font-mono text-xs sm:text-sm focus:outline-none resize-none ${
                   darkMode
-                    ? 'bg-slate-700 text-white border-slate-600 focus:border-blue-400'
+                    ? 'bg-[#0d1117] text-[#e6edf3] border-[#30363d] focus:border-amber-400/60'
                     : 'bg-white text-gray-800 border-gray-200 focus:border-blue-400'
                 }`}
                 placeholder="Enter JSON to generate interfaces..."
               />
               <div className="mt-4">
-                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-3`}>Select Language:</label>
+                <label className={`block text-sm font-medium ${darkMode ? 'text-[#7d8590]' : 'text-gray-600'} mb-3`}>Select Language:</label>
                 <div className="grid grid-cols-2 gap-2">
                   {LANGUAGES.map(lang => (
                     <button
@@ -814,10 +819,10 @@ const DataTransformer = () => {
                       onClick={() => setCodeLanguage(lang.id)}
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                         codeLanguage === lang.id
-                          ? 'bg-blue-500 text-white shadow-md'
+                          ? 'bg-amber-400 text-gray-900'
                           : darkMode
-                            ? 'bg-slate-700 text-gray-300 hover:bg-slate-600'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            ? 'bg-[#21262d] text-[#7d8590] hover:text-[#e6edf3] border border-[#30363d]'
+                            : 'bg-gray-100 text-gray-600 hover:text-gray-900 border border-gray-200'
                       }`}
                     >
                       {lang.label}
@@ -833,16 +838,16 @@ const DataTransformer = () => {
                 Generate Code
               </button>
             </div>
-            <div className={`${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4 sm:p-6`}>
-              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>
-                💻 Generated Code ({codeLanguage})
+            <div className={`${darkMode ? 'bg-[#161b22] border border-[#30363d]' : 'bg-white border border-gray-200'} rounded-xl p-4 sm:p-6`}>
+              <h2 className={`text-lg sm:text-xl font-bold ${darkMode ? 'text-[#e6edf3]' : 'text-gray-900'} mb-4`}>
+                Generated <span className={`font-mono text-base ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>{codeLanguage}</span>
               </h2>
               <textarea
                 value={output}
                 readOnly
                 className={`w-full h-48 sm:h-64 md:h-80 p-4 border-2 rounded-lg font-mono text-xs sm:text-sm resize-none ${
                   darkMode
-                    ? 'bg-slate-700 text-white border-slate-600'
+                    ? 'bg-[#0d1117] text-[#e6edf3] border-[#30363d]'
                     : 'bg-gray-50 text-gray-800 border-gray-200'
                 }`}
                 placeholder="Code will appear here..."
@@ -862,7 +867,7 @@ const DataTransformer = () => {
 
         {/* Validation Status Bar */}
         {validation && activeTab !== 'validate' && (
-          <div className={`mt-6 ${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white'} rounded-xl shadow-lg p-4`}>
+          <div className={`mt-6 ${darkMode ? 'bg-[#161b22] border border-[#30363d]' : 'bg-white border border-gray-200'} rounded-xl p-4`}>
             <div className="flex items-center gap-3">
               {validation.valid ? (
                 <CheckCircle className={`${darkMode ? 'text-green-400' : 'text-green-500'} flex-shrink-0`} size={20} />
